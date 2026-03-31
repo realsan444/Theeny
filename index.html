@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASHERCARDS</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      background: #000;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #fff;
+    }
+
+    /* ── SCREENS ── */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
+    }
+
+    .screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* ════════════════════════════════════════════
+       MAIN MENU
+    ════════════════════════════════════════════ */
+    #menu-screen {
+      gap: 40px;
+      background: #000;
+    }
+
+    /* Floating background cards */
+    .bg-cards {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .bg-card {
+      position: absolute;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.025);
+      animation: floatCard linear infinite;
+    }
+
+    @keyframes floatCard {
+      0%   { transform: translateY(110vh) rotate(var(--rot-start)); opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 1; }
+      100% { transform: translateY(-30vh) rotate(var(--rot-end));   opacity: 0; }
+    }
+
+    /* Radial glow behind the title */
+    .menu-glow {
+      position: absolute;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(230,57,70,0.13) 0%, transparent 70%);
+      pointer-events: none;
+      animation: pulseGlow 4s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1);    opacity: 0.7; }
+      50%       { transform: scale(1.18); opacity: 1;   }
+    }
+
+    /* Menu content staggered fade-in */
+    .menu-content {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .menu-content > * {
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards;
+    }
+
+    .menu-content > *:nth-child(1) { animation-delay: 0.1s; }
+    .menu-content > *:nth-child(2) { animation-delay: 0.35s; }
+    .menu-content > *:nth-child(3) { animation-delay: 0.6s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .game-title {
+      font-size: clamp(3.2rem, 9vw, 6.5rem);
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow:
+        0 0 60px rgba(230,57,70,0.35),
+        0 0 20px rgba(230,57,70,0.15);
+      line-height: 1;
+    }
+
+    .game-title span {
+      color: #e63946;
+      text-shadow:
+        0 0 40px rgba(230,57,70,0.9),
+        0 0 80px rgba(230,57,70,0.4);
+    }
+
+    .title-tag {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.22);
+      text-shadow: none;
+      margin-top: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: #3a3a3a;
+      margin-top: -28px;
+    }
+
+    .btn-primary {
+      padding: 15px 60px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #fff;
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      outline: none;
+    }
+
+    .btn-primary:hover {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+      box-shadow: 0 0 28px rgba(255,255,255,0.2);
+    }
+
+    .btn-primary:active {
+      background: #ddd;
+      border-color: #ddd;
+      color: #000;
+    }
+
+    /* ════════════════════════════════════════════
+       GAME VIEW
+    ════════════════════════════════════════════ */
+    #game-screen {
+      justify-content: space-between;
+      padding: 24px 32px;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .top-bar .game-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #333;
+    }
+
+    .btn-small {
+      padding: 8px 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #666;
+      background: transparent;
+      border: 1px solid #222;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      outline: none;
+    }
+
+    .btn-small:hover {
+      color: #fff;
+      border-color: #fff;
+    }
+
+    /* Play field */
+    .play-field {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+    }
+
+    .pile {
+      width: 90px;
+      height: 126px;
+      border-radius: 10px;
+      border: 2px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #444;
+      position: relative;
+      cursor: pointer;
+      transition: border-color 0.18s;
+    }
+
+    .pile:hover {
+      border-color: #555;
+    }
+
+    .pile.deck-pile {
+      background: #0d0d0d;
+    }
+
+    .pile.deck-pile::before {
+      content: '';
+      position: absolute;
+      inset: 5px;
+      border-radius: 6px;
+      border: 1px solid #1e1e1e;
+    }
+
+    .pile.discard-pile {
+      background: #0a0a0a;
+    }
+
+    .pile.discard-pile.has-card {
+      background: #fff;
+      border-color: rgba(0,0,0,0.15);
+    }
+
+    .pile.discard-pile.has-card.blank {
+      background: #f5f5f5;
+    }
+
+    .pile-label {
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #333;
+      white-space: nowrap;
+    }
+
+    /* ── PLAYER HAND ── */
+    .hand-area {
+      width: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 16px;
+      padding-bottom: 12px;
+    }
+
+    .card-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .card-name {
+      font-size: 0.52rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+      white-space: nowrap;
+    }
+
+    .card {
+      width: 90px;
+      height: 126px;
+      border-radius: 10px;
+      background: #fff;
+      border: 1.5px solid rgba(0,0,0,0.12);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.8), 0 1px 4px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .card:hover {
+      transform: translateY(-24px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    @keyframes dealIn {
+      from { opacity: 0; transform: translateY(50px) scale(0.88); }
+      to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+
+    .card.dealing {
+      animation: dealIn 0.32s ease forwards;
+    }
+
+    @keyframes playOut {
+      from { opacity: 1; transform: translateY(0)    scale(1); }
+      to   { opacity: 0; transform: translateY(-48px) scale(0.82); }
+    }
+
+    .card.playing {
+      animation: playOut 0.24s ease forwards;
+      pointer-events: none;
+    }
+
+    .card:active {
+      transform: translateY(-14px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.8);
+    }
+
+    .card-corner {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+      gap: 2px;
+    }
+
+    .card-corner.top-left {
+      top: 7px;
+      left: 9px;
+    }
+
+    .card-corner.bottom-right {
+      bottom: 7px;
+      right: 9px;
+      transform: rotate(180deg);
+    }
+
+    .card-value {
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .card-suit {
+      font-size: 0.72rem;
+    }
+
+    .card-center {
+      font-size: 2.1rem;
+    }
+
+    .card[data-color="red"]    .card-value,
+    .card[data-color="red"]    .card-suit,
+    .card[data-color="red"]    .card-center { color: #c1121f; }
+
+    .card[data-color="blue"]   .card-value,
+    .card[data-color="blue"]   .card-suit,
+    .card[data-color="blue"]   .card-center { color: #1d6fa4; }
+
+    .card[data-color="green"]  .card-value,
+    .card[data-color="green"]  .card-suit,
+    .card[data-color="green"]  .card-center { color: #2d6a4f; }
+
+    .card[data-color="yellow"] .card-value,
+    .card[data-color="yellow"] .card-suit,
+    .card[data-color="yellow"] .card-center { color: #c77b00; }
+
+    .card[data-color="black"]  .card-value,
+    .card[data-color="black"]  .card-suit,
+    .card[data-color="black"]  .card-center { color: #222; }
+
+
+    .status-bar {
+      width: 100%;
+      text-align: center;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #2e2e2e;
+      padding: 4px 0 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════ MAIN MENU ════════════════ -->
+  <div id="menu-screen" class="screen">
+    <div class="bg-cards" id="bg-cards"></div>
+    <div class="menu-glow"></div>
+    <div class="menu-content">
+      <h1 class="game-title">Asher<span>Cards</span><small class="title-tag">uhh i forgot the actual name :D:D</small></h1>
+      <p class="subtitle">gedagadigedagadig</p>
+      <button class="btn-primary" id="play-btn">Play</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ GAME VIEW ════════════════ -->
+  <div id="game-screen" class="screen hidden">
+
+    <div class="top-bar">
+      <span class="game-label">AsherCards</span>
+      <button class="btn-small" id="menu-btn">Menu</button>
+    </div>
+
+    <div class="play-field">
+      <div class="pile deck-pile" id="deck-pile">
+        <span class="pile-label">Draw</span>
+      </div>
+      <div class="pile discard-pile" id="discard-pile">
+        <span class="pile-label">Discard</span>
+      </div>
+    </div>
+
+    <div class="hand-area" id="player-hand"></div>
+
+    <div class="status-bar" id="status-bar">Play a card or draw from the pile</div>
+
+  </div>
+
+  <script>
+    // ── Card factories ────────────────────────────────────────────────────────
+    function blankCard()  { return { id: 'blank',  image: null,                          label: null }; }
+    function freddyCard() { return { id: 'freddy', image: 'cardimages/Freddy-Mask.png',  label: "Five Nights at Freddy's" }; }
+
+    // ── Animated background cards (menu) ─────────────────────────────────────
+    function spawnBgCards() {
+      const container = document.getElementById('bg-cards');
+      const COUNT = 14;
+      const SIZES = [
+        { w: 60, h: 84 }, { w: 72, h: 100 }, { w: 50, h: 70 },
+        { w: 80, h: 112 }, { w: 44, h: 62 }
+      ];
+      for (let i = 0; i < COUNT; i++) {
+        const el = document.createElement('div');
+        el.className = 'bg-card';
+        const size = SIZES[i % SIZES.length];
+        const left = Math.random() * 98;
+        const dur  = 14 + Math.random() * 18;
+        const delay = -(Math.random() * dur);
+        const rotStart = (Math.random() - 0.5) * 40;
+        const rotEnd   = rotStart + (Math.random() - 0.5) * 30;
+        el.style.cssText = `
+          width: ${size.w}px; height: ${size.h}px; left: ${left}%;
+          --rot-start: ${rotStart}deg; --rot-end: ${rotEnd}deg;
+          animation-duration: ${dur}s; animation-delay: ${delay}s;
+        `;
+        container.appendChild(el);
+      }
+    }
+
+    // ── Game state ────────────────────────────────────────────────────────────
+    let playerHand = [];
+    let isAnimating = false;
+
+    function startGame() {
+      playerHand = [freddyCard(), blankCard(), blankCard(), blankCard(), blankCard()];
+      renderPlayerHand();
+      resetDiscard();
+      setStatus('Play a card or draw from the pile');
+    }
+
+    // ── Discard pile ──────────────────────────────────────────────────────────
+    function resetDiscard() {
+      const el = document.getElementById('discard-pile');
+      el.className = 'pile discard-pile';
+      el.innerHTML = `<span class="pile-label">Discard</span>`;
+    }
+
+    function updateDiscard(card) {
+      const el = document.getElementById('discard-pile');
+      if (card.image) {
+        el.className = 'pile discard-pile has-card';
+        el.innerHTML = `
+          <img src="${card.image}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px;border-radius:9px;" draggable="false" />
+          <span class="pile-label">Discard</span>
+        `;
+      } else {
+        el.className = 'pile discard-pile has-card blank';
+        el.innerHTML = `<span class="pile-label">Discard</span>`;
+      }
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    function buildCardEl(card, index) {
+      const wrap = document.createElement('div');
+      wrap.className = 'card-wrap';
+
+      const el = document.createElement('div');
+      el.className = 'card dealing';
+      el.style.animationDelay = `${index * 0.07}s`;
+      if (card.image) {
+        el.innerHTML = `<img src="${card.image}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px;border-radius:10px;" draggable="false" />`;
+      }
+      el.addEventListener('click', () => playCard(index));
+      wrap.appendChild(el);
+
+      if (card.label) {
+        const lbl = document.createElement('span');
+        lbl.className = 'card-name';
+        lbl.textContent = card.label;
+        wrap.appendChild(lbl);
+      }
+
+      return wrap;
+    }
+
+    function renderPlayerHand() {
+      const container = document.getElementById('player-hand');
+      container.innerHTML = '';
+      playerHand.forEach((card, i) => container.appendChild(buildCardEl(card, i)));
+    }
+
+    function setStatus(msg) {
+      document.getElementById('status-bar').textContent = msg;
+    }
+
+    // ── Actions ───────────────────────────────────────────────────────────────
+    function playCard(index) {
+      if (isAnimating) return;
+      const card = playerHand[index];
+      const cardEls = document.querySelectorAll('#player-hand .card');
+      const el = cardEls[index];
+      if (!el) return;
+
+      isAnimating = true;
+      el.classList.remove('dealing');
+      el.classList.add('playing');
+      updateDiscard(card);
+
+      setTimeout(() => {
+        playerHand.splice(index, 1);
+        renderPlayerHand();
+        isAnimating = false;
+        setStatus('Card played');
+      }, 260);
+    }
+
+    function drawCard() {
+      if (isAnimating) return;
+      playerHand.push(blankCard());
+      renderPlayerHand();
+      setStatus('Drew a card');
+    }
+
+    // ── Screen transitions ────────────────────────────────────────────────────
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => {
+        s.classList.toggle('hidden', s.id !== id);
+      });
+    }
+
+    // ── Init & listeners ──────────────────────────────────────────────────────
+    spawnBgCards();
+
+    document.getElementById('play-btn').addEventListener('click', () => {
+      startGame();
+      showScreen('game-screen');
+    });
+
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      showScreen('menu-screen');
+    });
+
+    document.getElementById('deck-pile').addEventListener('click', drawCard);
+
+  </script>
+</body>
+</html>
