@@ -2,9 +2,11 @@
 **Welcome to** ***Crossovers!***
 
 This is a card game about uhhh... crossovers, as the name recalls it.
-To play it, go to the [Asher games website](https://ashergame.pages.dev/) (Requires a key)
+To play it, go to the [Crossworlds website](https://ashergame.pages.dev/) (Requires a key)
 
 - made by santhedev and bakedcake
+
+### Latest Version: 1.55-beta
 
 # Updates
 ### Version 1.55-beta
