@@ -292,11 +292,11 @@
     }
     .hp-hearts { display: flex; flex-direction: column; gap: 5px; }
     .hp-heart {
-      width: 13px; height: 13px; border-radius: 50%;
+      width: 26px; height: 26px; border-radius: 50%;
       background: #c0162a;
       transition: background 0.2s;
     }
-    .hp-heart.empty { background: #1e1e1e; border: 1px solid #2a2a2a; }
+    .hp-heart.empty { background: #1e1e1e; border: 2px solid #2a2a2a; }
 
     /* Turn indicator — lives in top bar */
     .turn-row {
@@ -382,18 +382,27 @@
     .turn-status-panel {
       position: fixed; right: 8px; top: 50%; transform: translateY(-50%);
       display: flex; flex-direction: column; align-items: flex-end;
-      gap: 4px; z-index: 25; pointer-events: none;
+      gap: 6px; z-index: 25; pointer-events: none;
     }
     .turn-status-line {
-      min-width: 122px; padding: 5px 8px;
-      border-radius: 6px; border: 1px solid rgba(255,255,255,0.08);
+      min-width: 183px; padding: 7.5px 12px;
+      border-radius: 9px; border: 1.5px solid rgba(255,255,255,0.08);
       background: rgba(0,0,0,0.46);
-      font-size: 0.42rem; font-weight: 800; letter-spacing: 0.08em;
+      font-size: 0.51rem; font-weight: 600; letter-spacing: 0.12em;
       text-transform: uppercase; text-align: right;
       color: rgba(255,255,255,0.52);
     }
     .turn-status-line.ai { color: rgba(230,57,70,0.72); }
     .turn-status-line.player { color: rgba(255,255,255,0.68); }
+
+    /* Version text */
+    .version-text {
+      position: fixed; bottom: 8px; right: 12px;
+      font-size: 0.64rem; font-weight: 400;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      pointer-events: none; z-index: 10;
+    }
 
     /* Effects row hidden */
     .effects-row { display: none; }
@@ -738,9 +747,6 @@
         </div>
         <input type="range" class="setting-slider" id="ai-speed-slider" min="0.5" max="10" step="0.5" value="0.5">
       </div>
-      <div class="setting-label" id="ai-speed-warning" style="color: #ffd166; display: none;">
-        The bot thinking time doesn't work as of right now!
-      </div>
       <div class="setting-row">
         <div class="setting-label">
           <span>Menu Confirmation</span>
@@ -808,8 +814,8 @@
     <div class="status-bar" id="status-bar">select a card</div>
 
     <div class="turn-status-panel" id="turn-status-panel">
-      <div class="turn-status-line ai" id="ai-turn-status">AI misses: 0 turns</div>
-      <div class="turn-status-line player" id="player-turn-status">YOU miss: 0 turns</div>
+      <div class="turn-status-line ai" id="ai-turn-status">AI MISSED TURNS: 0</div>
+      <div class="turn-status-line player" id="player-turn-status">PLAYER MISSED TURNS: 0</div>
     </div>
 
     <!-- Overlays -->
@@ -973,6 +979,8 @@
       samzus:      'cardimages/Samzus Laser.png',
       snap_knee:   'cardimages/Snap Your Knees.png',
       soul:        'cardimages/Soul.png',
+      arthur:      'cardimages/Arthur Morgan Shot.png',
+      jump:        'cardimages/Jump.png',
     };
 
     function buildCardEl(card, index) {
@@ -1040,8 +1048,8 @@
       const ai=document.getElementById('ai-turn-status');
       const player=document.getElementById('player-turn-status');
       if(!ai||!player)return;
-      ai.textContent=`AI misses: ${formatMissTurns(G.aiFX)}`;
-      player.textContent=`YOU miss: ${formatMissTurns(G.playerFX)}`;
+      ai.textContent=`AI MISSED TURNS: ${formatMissTurns(G.aiFX)}`;
+      player.textContent=`PLAYER MISSED TURNS: ${formatMissTurns(G.playerFX)}`;
     }
 
     function renderDefenseZone() {
@@ -1650,12 +1658,6 @@
     sliderEl.addEventListener('input', (e) => {
       aiThinkSeconds = parseFloat(e.target.value);
       document.getElementById('ai-speed-val').textContent = aiThinkSeconds + 's';
-      const warning = document.getElementById('ai-speed-warning');
-      if (aiThinkSeconds > 0.5) {
-        warning.style.display = 'block';
-      } else {
-        warning.style.display = 'none';
-      }
       updateSliderFill();
     });
     menuConfirmToggle.addEventListener('click', () => {
@@ -1679,5 +1681,6 @@
     updateStartingCardsFill();
 
   </script>
+  <div class="version-text">1.6-beta</div>
 </body>
 </html>
