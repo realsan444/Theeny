@@ -7,6 +7,13 @@ To play it, go to the [Asher games website](https://ashergame.pages.dev/) (Requi
 - made by santhedev and bakedcake
 
 # Updates
+### Version 1.2-beta
+- Fixed the Samzus Laser bug AGAIN
+- Fixed a problem with Doug the Bug not appearing as a card with an image
+- Fixed a problem with Snap Your Knees not appearing as a card with an image
+- Added Soul as an image
+- Added Hoverboard as an image
+
 ### Version 1.1-beta
 - Fixed a bug where the Samzus Laser image wouldn't appear
 - You need a key to unlock the project, since it is in beta.
