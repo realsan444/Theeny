@@ -1520,12 +1520,34 @@
     // ── Gate ──────────────────────────────────────────────────────────────────
     function checkGate() {
       const input=document.getElementById('gate-input');
-      if(input.value==='heavenlyjumpstyle'){showScreen('menu-screen');}
+      const savedKey = localStorage.getItem('Key');
+      
+      // If there's a saved key, use it to bypass gate
+      if(savedKey === 'heavenlyjumpstyle'){
+        showScreen('menu-screen');
+        return;
+      }
+      
+      // Check if entered key is correct
+      if(input.value==='heavenlyjumpstyle'){
+        // Save the correct key to local storage
+        localStorage.setItem('Key', 'heavenlyjumpstyle');
+        showScreen('menu-screen');
+      }
       else{input.classList.remove('error');void input.offsetWidth;input.classList.add('error');input.value='';setTimeout(()=>input.classList.remove('error'),400);}
     }
 
     // ── Init ──────────────────────────────────────────────────────────────────
     spawnBgCards();
+    
+    // Check for saved gate key on page load
+    const savedKey = localStorage.getItem('Key');
+    if(savedKey === 'heavenlyjumpstyle'){
+      showScreen('menu-screen');
+    } else {
+      showScreen('gate-screen');
+    }
+    
     document.getElementById('gate-submit').addEventListener('click',checkGate);
     document.getElementById('gate-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkGate();});
     document.getElementById('play-btn').addEventListener('click',()=>{startGame();showScreen('game-screen');});
