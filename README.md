@@ -7,6 +7,10 @@ To play it, go to the [Asher games website](https://ashergame.pages.dev/) (Requi
 - made by santhedev and bakedcake
 
 # Updates
+### Version 1.25-beta
+- Added a favicon!
+- Made sure that bot defaults at 0, since the thinking times do not work as of right now.
+
 ### Version 1.2-beta
 - Fixed the Samzus Laser bug AGAIN
 - Fixed a problem with Doug the Bug not appearing as a card with an image
