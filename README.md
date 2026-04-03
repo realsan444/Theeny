@@ -16,7 +16,8 @@ To play it, go to the [Crossovers](https://ashergame.pages.dev/) (Requires a key
 - Tooltip is now at the back of the card
 - ai cards are centered
 - cards are bigger
-  version made by santhedev
+  
+** version made by santhedev **
 ### Version 1.8.2-beta
 - Tooltip now shows what a card does
 - Heal effect
