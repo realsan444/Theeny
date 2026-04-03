@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CROSSOVERS</title>
+  <link rel="icon" type="image/png" href="cardimages/Snap Your Knees.png" />
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -709,9 +710,9 @@
       <div class="setting-row">
         <div class="setting-label">
           <span>AI Think Speed</span>
-          <span class="setting-val" id="ai-speed-val">5s</span>
+          <span class="setting-val" id="ai-speed-val">0s</span>
         </div>
-        <input type="range" class="setting-slider" id="ai-speed-slider" min="0" max="10" step="1" value="5">
+        <input type="range" class="setting-slider" id="ai-speed-slider" min="0" max="10" step="1" value="0">
       </div>
     </div>
   </div>
@@ -856,7 +857,7 @@
       for (let i=0;i<14;i++) {
         const el = document.createElement('div');
         el.className = 'bg-card';
-    let aiThinkSeconds = 5;
+    let aiThinkSeconds = 0;
         const size = SIZES[i%SIZES.length];
         const left = Math.random()*98, dur=14+Math.random()*18, delay=-(Math.random()*dur);
         const rs=(Math.random()-0.5)*40, re=rs+(Math.random()-0.5)*30;
