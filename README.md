@@ -6,7 +6,7 @@ To play it, go to the [Crossovers](https://ashergame.pages.dev/) (Requires a key
 
 - made by santhedev and bakedcake
 
-### Latest Version: 1.8.2-beta
+### Latest Version: 1.8.3-beta
 
 # Known Issues:
 - The Arthur Morgan shot can one-shot. Impending fixes.
