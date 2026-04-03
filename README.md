@@ -2,7 +2,7 @@
 **Welcome to** ***Crossovers!***
 
 This is a card game about uhhh... crossovers, as the name recalls it.
-To play it, go to the [Crossworlds website](https://ashergame.pages.dev/) (Requires a key)
+To play it, go to the [Crossovers](https://ashergame.pages.dev/) (Requires a key)
 
 - made by santhedev and bakedcake
 
@@ -10,8 +10,13 @@ To play it, go to the [Crossworlds website](https://ashergame.pages.dev/) (Requi
 
 # Known Issues:
 - The Arthur Morgan shot can one-shot. Impending fixes.
-
 # Updates
+## Version 1.8.3-beta
+- made all text more confortable
+- Tooltip is now at the back of the card
+- ai cards are centered
+- cards are bigger
+  version made by santhedev
 ### Version 1.8.2-beta
 - Tooltip now shows what a card does
 - Heal effect
