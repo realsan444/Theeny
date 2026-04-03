@@ -7,6 +7,16 @@ To play it, go to the [Asher games website](https://ashergame.pages.dev/) (Requi
 - made by santhedev and bakedcake
 
 # Updates
+### Version 1.5-beta
+- Added a slider for how many cards you start with
+- Added a confirmation menu for being in-game.
+- Added a toggle in Settings to turn off the confirmation.
+- Damage reduction or 'damage stacking' has now been implemented. For example if the AI has a shield then if you use for example a Kirby Hammer then it breaks the shield and the AI only takes 1 DMG.
+- Fixed a grammar issue on the Game's main menu. 'A GAMES CROSSOVER' to 'A GAME OF CROSSOVERS'
+- Fixed a bug where sometimes the AI wouldn't play.
+- Added 0.5 as the minimum seconds to the AI thinking time, or else the AI would break.
+- Fixed a bug where if the AI was stunned and you killed them while they were stunned the You Win screen wouldn't appear.
+
 ### Version 1.25-beta
 - Added a favicon!
 - Made sure that bot defaults at 0, since the thinking times do not work as of right now.
