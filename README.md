@@ -6,7 +6,7 @@ To play it, go to the [Crossworlds website](https://ashergame.pages.dev/) (Requi
 
 - made by santhedev and bakedcake
 
-### Latest Version: 1.55-beta
+### Latest Version: 1.6-beta
 
 # Updates
 ### Version 1.6-beta
