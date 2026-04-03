@@ -9,6 +9,13 @@ To play it, go to the [Crossworlds website](https://ashergame.pages.dev/) (Requi
 ### Latest Version: 1.55-beta
 
 # Updates
+### Version 1.6-beta
+- Added a version display
+- AI is now fixed
+- Jump, and Arthur Morgan shot now have images.
+
+**Modified by bakedcake**
+
 ### Version 1.55-beta
 - Added so if you got the key right it would save and you wouldn't have to do it again.
 
