@@ -448,6 +448,12 @@
       box-shadow: 0 0 0 2px #fff;
     }
     .card:active { transform: translateY(-10px); }
+    
+    /* Defensive: Ensure cards are always clickable */
+    #player-hand .card {
+      pointer-events: auto !important;
+      z-index: 10 !important;
+    }
 
     /* Card text content */
     .card-title {
@@ -553,8 +559,11 @@
       position: absolute; inset: 0; background: rgba(0,0,0,0.82);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       z-index: 150; backdrop-filter: blur(3px); gap: 14px;
+      opacity: 0; transform: scale(0.94) translateY(16px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
     }
-    .game-overlay.hidden { display: none; }
+    .game-overlay.hidden { opacity: 0; transform: scale(0.94) translateY(16px); pointer-events: none; }
+    .game-overlay.active { opacity: 1; transform: scale(1) translateY(0); }
     .overlay-title {
       font-size: 0.62rem; letter-spacing: 0.35em; text-transform: uppercase; color: #444;
     }
@@ -660,6 +669,7 @@
       width: 100%; height: 3px; border-radius: 3px;
       outline: none; border: none; cursor: pointer;
       background: linear-gradient(to right, #fff 50%, rgba(255,255,255,0.15) 50%);
+      transition: background 0.3s ease;
     }
     .setting-slider::-webkit-slider-thumb {
       -webkit-appearance: none; width: 18px; height: 18px;
@@ -671,6 +681,20 @@
       width: 18px; height: 18px; border-radius: 50%;
       background: #fff; border: none;
       cursor: pointer;
+    }
+    .toggle-btn {
+      width: 48px; height: 24px; border-radius: 12px;
+      background: #fff; border: 1px solid rgba(255,255,255,0.3);
+      cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease;
+      font-size: 0.5rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #000;
+      outline: none;
+    }
+    .toggle-btn:hover {
+      border-color: rgba(255,255,255,0.6);
+    }
+    .toggle-btn.off {
+      background: #1e1e1e; border-color: rgba(255,255,255,0.2); color: #666;
     }
   </style>
 </head>
@@ -693,7 +717,7 @@
     <div class="menu-glow"></div>
     <div class="menu-content">
       <h1 class="game-title">Cross<span>overs</span></h1>
-      <p class="subtitle">A Games Crossover</p>
+      <p class="subtitle">A GAME OF CROSSOVERS</p>
       <button class="btn-primary" id="play-btn">Play</button>
     </div>
     <button class="settings-btn" id="settings-btn"><span class="gear-icon">⚙</span> Settings</button>
@@ -710,9 +734,26 @@
       <div class="setting-row">
         <div class="setting-label">
           <span>AI Think Speed</span>
-          <span class="setting-val" id="ai-speed-val">0s</span>
+          <span class="setting-val" id="ai-speed-val">0.5s</span>
         </div>
-        <input type="range" class="setting-slider" id="ai-speed-slider" min="0" max="10" step="1" value="0">
+        <input type="range" class="setting-slider" id="ai-speed-slider" min="0.5" max="10" step="0.5" value="0.5">
+      </div>
+      <div class="setting-label" id="ai-speed-warning" style="color: #ffd166; display: none;">
+        The bot thinking time doesn't work as of right now!
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Menu Confirmation</span>
+          <span class="setting-val" id="menu-confirm-val">ON</span>
+        </div>
+        <button class="toggle-btn" id="menu-confirm-toggle">ON</button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Starting Cards</span>
+          <span class="setting-val" id="starting-cards-val">5</span>
+        </div>
+        <input type="range" class="setting-slider" id="starting-cards-slider" min="3" max="10" step="1" value="5">
       </div>
     </div>
   </div>
@@ -797,6 +838,16 @@
       <button class="overlay-btn" id="menu-again-btn">Main Menu</button>
     </div>
 
+    <!-- Menu confirmation overlay -->
+    <div class="game-overlay hidden" id="menu-confirm-overlay">
+      <div class="overlay-title">Return to Main Menu?</div>
+      <div class="overlay-title" style="font-size:0.5rem;color:#666;margin-top:-8px;">Current game progress will be lost</div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+        <button class="overlay-btn red" id="confirm-menu-btn">Yes, Return to Menu</button>
+        <button class="overlay-btn" id="cancel-menu-btn">Cancel</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -850,6 +901,11 @@
                untouchable:false, illumina:false, buffed:null };
     }
 
+    // ── Global Variables ───────────────────────────────────────────────────────
+    let aiThinkSeconds = 0.5;
+    let menuConfirmationEnabled = true;
+    let startingCardsCount = 5;
+
     // ── Animated background cards (menu) ─────────────────────────────────────
     function spawnBgCards() {
       const container = document.getElementById('bg-cards');
@@ -857,7 +913,6 @@
       for (let i=0;i<14;i++) {
         const el = document.createElement('div');
         el.className = 'bg-card';
-    let aiThinkSeconds = 0;
         const size = SIZES[i%SIZES.length];
         const left = Math.random()*98, dur=14+Math.random()*18, delay=-(Math.random()*dur);
         const rs=(Math.random()-0.5)*40, re=rs+(Math.random()-0.5)*30;
@@ -875,7 +930,7 @@
             playerFX:makeFX(), aiFX:makeFX(),
             phase:'player-select', pendingPlay:null, animating:false, log:[],
             playerDefenseZone:[], aiDefenseZone:[] };
-      for (let i=0;i<5;i++) { G.playerHand.push(drawFromDeck()); G.aiHand.push(drawFromDeck()); }
+      for (let i=0;i<startingCardsCount;i++) { G.playerHand.push(drawFromDeck()); G.aiHand.push(drawFromDeck()); }
       renderAll();
       renderDefenseZone();
       updateDiscard(null);
@@ -915,7 +970,7 @@
       hoverboard:  'cardimages/Hoverboard.png',
       knife:       'cardimages/Knife.png',
       meat:        'cardimages/Meat.png',
-      samzus:      'cardimages/Samus_Lazer.png',
+      samzus:      'cardimages/Samzus Laser.png',
       snap_knee:   'cardimages/Snap Your Knees.png',
       soul:        'cardimages/Soul.png',
     };
@@ -928,6 +983,11 @@
         el.classList.add('has-image');
         const img = document.createElement('img');
         img.className = 'card-img'; img.src = imgSrc; img.alt = card.name;
+        img.onerror = function() {
+          // Fallback: remove image and has-image class if image fails to load
+          el.classList.remove('has-image');
+          img.remove();
+        };
         el.appendChild(img);
       }
       const t=document.createElement('div'); t.className='card-title'; t.textContent=card.name||'';
@@ -937,8 +997,33 @@
     }
 
     function renderPlayerHand() {
-      const c=document.getElementById('player-hand'); c.innerHTML='';
-      G.playerHand.forEach((card,i)=>c.appendChild(buildCardEl(card,i)));
+      const c=document.getElementById('player-hand'); 
+      c.innerHTML='';
+      console.log('Rendering player hand, cards:', G.playerHand.length);
+      
+      // Safety: Ensure all overlays are hidden during player turn
+      const overlays = ['menu-confirm-overlay', 'target-overlay', 'choice-overlay', 'gameover-overlay'];
+      overlays.forEach(id => {
+        const overlay = document.getElementById(id);
+        if (overlay && !overlay.classList.contains('hidden')) {
+          console.warn('Overlay was not hidden:', id);
+          overlay.classList.add('hidden');
+        }
+      });
+      
+      console.log('Overlay states:', {
+        menuConfirm: document.getElementById('menu-confirm-overlay')?.classList.contains('hidden'),
+        target: document.getElementById('target-overlay')?.classList.contains('hidden'),
+        choice: document.getElementById('choice-overlay')?.classList.contains('hidden'),
+        gameover: document.getElementById('gameover-overlay')?.classList.contains('hidden')
+      });
+      
+      G.playerHand.forEach((card,i)=>{
+        const cardEl = buildCardEl(card,i);
+        // Safety: Force pointer-events to ensure cards are clickable
+        cardEl.style.pointerEvents = 'auto';
+        c.appendChild(cardEl);
+      });
     }
 
     function renderEffects() {
@@ -974,14 +1059,25 @@
         if (card) {
           slot.className = 'defense-slot filled';
           const imgSrc = CARD_IMAGES[card.id];
+          let hasImage = false;
           if (imgSrc) {
             const img = document.createElement('img');
             img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:9px;z-index:0;';
             img.src = imgSrc; img.alt = card.name;
+            img.onerror = function() {
+              // Fallback: remove image and update styling
+              img.remove();
+              hasImage = false;
+              // Update name styling to text-only version
+              if (nm) {
+                nm.style.cssText = 'font-size:0.55rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:rgba(0,0,0,0.85);text-align:center;padding:6px 4px;line-height:1.3;position:relative;z-index:1;';
+              }
+            };
             slot.appendChild(img);
+            hasImage = true;
           }
           const nm = document.createElement('div');
-          nm.style.cssText = imgSrc
+          nm.style.cssText = hasImage
             ? 'position:absolute;bottom:0;left:0;right:0;font-size:0.5rem;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;color:rgba(255,255,255,0.95);text-align:center;padding:5px 4px;background:rgba(0,0,0,0.6);border-radius:0 0 8px 8px;z-index:1;'
             : 'font-size:0.55rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:rgba(0,0,0,0.85);text-align:center;padding:6px 4px;line-height:1.3;position:relative;z-index:1;';
           nm.textContent = card.name;
@@ -1036,7 +1132,11 @@
 
     // ── Card click (2-step: select → destination) ──────────────────────────────
     function onCardClick(index) {
-      if (G.phase!=='player-select'||G.animating) return;
+      console.log('Card clicked:', index, 'Phase:', G.phase, 'Animating:', G.animating);
+      if (G.phase!=='player-select'||G.animating) {
+        console.log('Card click blocked - Phase:', G.phase, 'Animating:', G.animating);
+        return;
+      }
       const els=document.querySelectorAll('#player-hand .card');
       if (G.pendingPlay&&G.pendingPlay.handIndex===index) { deselect(); return; }
       G.pendingPlay={card:G.playerHand[index],handIndex:index};
@@ -1049,7 +1149,11 @@
 
     function deselect() {
       G.pendingPlay=null;
-      document.querySelectorAll('#player-hand .card').forEach(e=>e.classList.remove('selected'));
+      document.querySelectorAll('#player-hand .card').forEach(e=>{
+        e.classList.remove('selected');
+        // Safety: Remove any animation classes that might block interaction
+        e.classList.remove('playing');
+      });
       document.getElementById('defense-zone').classList.remove('targeting');
       setStatus('select a card from your hand');
     }
@@ -1076,13 +1180,22 @@
       const btns=document.getElementById('choice-buttons'); btns.innerHTML='';
       opts.forEach(o=>{
         const b=document.createElement('button');
-        b.className=`overlay-btn ${o.cls}`; b.textContent=o.text;
+        b.className='overlay-btn '+o.cls;
+        b.textContent=o.text;
         b.addEventListener('click',()=>{ hideChoiceOverlay(); executePlay('player',G.pendingPlay.handIndex,{choice:o.val}); });
         btns.appendChild(b);
       });
-      document.getElementById('choice-overlay').classList.remove('hidden');
+      
+      // Fix: Properly show choice overlay with transition
+      const overlay = document.getElementById('choice-overlay');
+      overlay.classList.remove('hidden');
+      setTimeout(() => overlay.classList.add('active'), 10);
     }
-    function hideChoiceOverlay() { document.getElementById('choice-overlay').classList.add('hidden'); }
+    function hideChoiceOverlay() { 
+      const overlay = document.getElementById('choice-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => overlay.classList.add('hidden'), 200);
+    }
 
     // ── Execute play ───────────────────────────────────────────────────────────
     function executePlay(who, handIndex, opts) {
@@ -1224,7 +1337,16 @@
       }
       if (oFX.dodgeCharges>0) {
         if(oFX.buffed!=='dodge'){oFX.dodgeCharges--;if(oFX.dodgeCharges===0)consumeDefCard(attackerIsPlayer,['sonic_shoes','hoverboard']);}
-        addLog(`Attack dodged!`); return;
+        // For 1 DMG attacks, dodge completely. For >1 DMG attacks, reduce by 1
+        if(amount <= 1) {
+          addLog(`Attack dodged!`);
+        } else {
+          const reducedAmount = amount - 1;
+          if(attackerIsPlayer)G.aiHP=Math.max(0,G.aiHP-reducedAmount);
+          else G.playerHP=Math.max(0,G.playerHP-reducedAmount);
+          addLog(`1 DMG dodged! ${reducedAmount} DMG taken!`);
+        }
+        return;
       }
       if (oFX.bedrockActive) {
         if(oFX.buffed!=='bedrock')oFX.bedrockActive=false;
@@ -1282,18 +1404,29 @@
 
     // ── Turn management ────────────────────────────────────────────────────────
     function endPlayerTurn() {
+      console.log('Ending player turn, phase:', G.phase);
       if(G.playerFX.hot>0){G.playerFX.hot--;G.playerHP=Math.min(3,G.playerHP+1);addLog(`You: HoT +1 HP`);}
       if(G.aiFX.stun>0){G.aiFX.stun--;addLog(`AI stunned — skips turn`);endAiTurn();return;}
       if(G.aiFX.missedTurns>0){G.aiFX.missedTurns--;addLog(`AI misses a turn`);endAiTurn();return;}
-      renderAll();      G.phase='ai-turn'; setTurn('ai'); setStatus('ai is thinking…');
+      
+      // Safety: Ensure clean state for next player turn
+      G.animating = false;
+      G.pendingPlay = null;
+      
+      renderAll();      
+      G.phase='ai-turn'; setTurn('ai'); setStatus('ai is thinking…');
       setTimeout(doAiTurn,aiThinkSeconds * 1000);
     }
 
     function endAiTurn() {
+      console.log('Ending AI turn, phase:', G.phase);
       if(G.aiFX.hot>0){G.aiFX.hot--;G.aiHP=Math.min(3,G.aiHP+1);addLog(`AI: HoT +1 HP`);}
       if(G.playerFX.stun>0){
         G.playerFX.stun--;
         addLog(`You are stunned — turn skipped`);
+        // Safety: Ensure clean state for next AI turn
+        G.animating = false;
+        G.pendingPlay = null;
         renderAll(); G.phase='ai-turn'; setTurn('ai'); setStatus('ai is thinking…');
         setTimeout(doAiTurn,aiThinkSeconds * 1000);
         return;
@@ -1301,10 +1434,18 @@
       if(G.playerFX.missedTurns>0){
         G.playerFX.missedTurns--;
         addLog(`You miss a turn`);
+        // Safety: Ensure clean state for next AI turn
+        G.animating = false;
+        G.pendingPlay = null;
         renderAll(); G.phase='ai-turn'; setTurn('ai'); setStatus('ai is thinking…');
         setTimeout(doAiTurn,aiThinkSeconds * 1000);
         return;
       }
+      
+      // Safety: Ensure clean state for next player turn
+      G.animating = false;
+      G.pendingPlay = null;
+      
       renderAll(); G.phase='player-select'; setTurn('player'); setStatus('select a card from your hand');
     }
 
@@ -1315,15 +1456,18 @@
     }
 
     function doAiTurn() {
+      console.log('AI turn started, phase:', G.phase, 'AI hand length:', G.aiHand.length);
       if(G.phase==='gameover')return;
       if(G.aiFX.stun>0){G.aiFX.stun--;addLog(`AI stunned — skips turn`);renderEffects();endAiTurn();return;}
       if(G.aiFX.missedTurns>0){G.aiFX.missedTurns--;addLog(`AI misses a turn`);renderEffects();endAiTurn();return;}
       const shouldDraw = !G.aiHand.length || aiHandIsOnlyHeals();
+      console.log('Should AI draw?', shouldDraw, 'Deck length:', G.deck.length);
       if(shouldDraw && G.deck.length>0){
         G.aiHand.push(drawFromDeck()); addLog(`AI draws a card`); renderAiHand(); endAiTurn(); return;
       }
-      if(!G.aiHand.length){endAiTurn();return;}
+      if(!G.aiHand.length){console.log('AI has no cards, ending turn'); endAiTurn();return;}
       const idx=aiPickCard();
+      console.log('AI picked card index:', idx, 'Card:', G.aiHand[idx]?.name);
       const card=G.aiHand[idx];
       addLog(`AI plays: ${card.name}`);
       executePlay('ai',idx,aiOpts(card));
@@ -1332,12 +1476,15 @@
 
     function aiPickCard() {
       const h=G.aiHand;
-      if(G.playerHP<=1&&!G.playerFX.illumina){const i=h.findIndex(c=>c.type==='instakill');if(i!==-1)return i;}
-      if(G.playerHP<=2&&!G.playerFX.untouchable){const i=h.findIndex(c=>['kirby','boulder','arthur','doug','jump','knife','crushed','power_mush'].includes(c.id));if(i!==-1)return i;}
-      if(G.aiHP<=2){const i=h.findIndex(c=>c.type==='heal'||c.id==='ultra_meat');if(i!==-1)return i;const j=h.findIndex(c=>c.type==='defense');if(j!==-1)return j;}
+      console.log('AI picking from hand:', h.map(c => c.name));
+      if(G.playerHP<=1&&!G.playerFX.illumina){const i=h.findIndex(c=>c.type==='instakill');if(i!==-1){console.log('AI found instakill opportunity');return i;}}
+      if(G.playerHP<=2&&!G.playerFX.untouchable){const i=h.findIndex(c=>['kirby','boulder','arthur','doug','jump','knife','crushed','power_mush'].includes(c.id));if(i!==-1){console.log('AI found damage opportunity');return i;}}
+      if(G.aiHP<=2){const i=h.findIndex(c=>c.type==='heal'||c.id==='ultra_meat');if(i!==-1){console.log('AI found heal opportunity');return i;}const j=h.findIndex(c=>c.type==='defense');if(j!==-1){console.log('AI found defense opportunity');return j;}}
       const ik=h.findIndex(c=>c.type==='instakill'&&!G.playerFX.illumina&&!G.playerFX.untouchable);
-      if(ik!==-1)return ik;
-      return Math.floor(Math.random()*h.length);
+      if(ik!==-1){console.log('AI found instakill');return ik;}
+      const randomIndex = Math.floor(Math.random()*h.length);
+      console.log('AI picking random card:', randomIndex);
+      return randomIndex;
     }
 
     function aiOpts(card) {
@@ -1358,7 +1505,11 @@
       t.textContent=win?'YOU WIN':'YOU LOSE';
       t.className='gameover-title '+(win?'win':'lose');
       document.getElementById('gameover-sub').textContent=win?'the ai has been defeated':'better luck next time';
-      document.getElementById('gameover-overlay').classList.remove('hidden');
+      
+      // Fix: Properly show gameover overlay with transition
+      const overlay = document.getElementById('gameover-overlay');
+      overlay.classList.remove('hidden');
+      setTimeout(() => overlay.classList.add('active'), 10);
     }
 
     // ── Screen transitions ─────────────────────────────────────────────────────
@@ -1378,7 +1529,28 @@
     document.getElementById('gate-submit').addEventListener('click',checkGate);
     document.getElementById('gate-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkGate();});
     document.getElementById('play-btn').addEventListener('click',()=>{startGame();showScreen('game-screen');});
-    document.getElementById('menu-btn').addEventListener('click',()=>showScreen('menu-screen'));
+    document.getElementById('menu-btn').addEventListener('click',()=>{
+      if (menuConfirmationEnabled) {
+        const overlay = document.getElementById('menu-confirm-overlay');
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.add('active'), 10);
+      } else {
+        showScreen('menu-screen');
+      }
+    });
+    document.getElementById('confirm-menu-btn').addEventListener('click',()=>{
+      const overlay = document.getElementById('menu-confirm-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        showScreen('menu-screen');
+      }, 200);
+    });
+    document.getElementById('cancel-menu-btn').addEventListener('click',()=>{
+      const overlay = document.getElementById('menu-confirm-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => overlay.classList.add('hidden'), 200);
+    });
     document.getElementById('deck-pile').addEventListener('click',()=>{
       if(G.phase!=='player-select'||G.animating||G.pendingPlay)return;
       if(G.deck.length>0){G.playerHand.push(drawFromDeck());renderPlayerHand();addLog(`You drew a card`);endPlayerTurn();}
@@ -1404,10 +1576,20 @@
       executePlay('player',handIndex,null);
     });
     document.getElementById('play-again-btn').addEventListener('click',()=>{
-      document.getElementById('gameover-overlay').classList.add('hidden'); startGame();
+      const overlay = document.getElementById('gameover-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        startGame();
+      }, 200);
     });
     document.getElementById('menu-again-btn').addEventListener('click',()=>{
-      document.getElementById('gameover-overlay').classList.add('hidden'); showScreen('menu-screen');
+      const overlay = document.getElementById('gameover-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        showScreen('menu-screen');
+      }, 200);
     });
     
     // Settings modal
@@ -1432,16 +1614,47 @@
       backdrop.addEventListener('click', (e) => { if(e.target===backdrop) closeModal(); });
     })();
     const sliderEl = document.getElementById('ai-speed-slider');
+    const menuConfirmToggle = document.getElementById('menu-confirm-toggle');
+    const startingCardsSlider = document.getElementById('starting-cards-slider');
+    
     function updateSliderFill() {
-      const pct = sliderEl.value * 10;
+      const pct = ((sliderEl.value - sliderEl.min) / (sliderEl.max - sliderEl.min)) * 100;
       sliderEl.style.background = `linear-gradient(to right, #fff 0%, #fff ${pct}%, rgba(255,255,255,0.15) ${pct}%, rgba(255,255,255,0.15) 100%)`;
     }
+    function updateStartingCardsFill() {
+      const pct = ((startingCardsSlider.value - startingCardsSlider.min) / (startingCardsSlider.max - startingCardsSlider.min)) * 100;
+      startingCardsSlider.style.background = `linear-gradient(to right, #fff 0%, #fff ${pct}%, rgba(255,255,255,0.15) ${pct}%, rgba(255,255,255,0.15) 100%)`;
+    }
     sliderEl.addEventListener('input', (e) => {
-      aiThinkSeconds = parseInt(e.target.value, 10);
+      aiThinkSeconds = parseFloat(e.target.value);
       document.getElementById('ai-speed-val').textContent = aiThinkSeconds + 's';
+      const warning = document.getElementById('ai-speed-warning');
+      if (aiThinkSeconds > 0.5) {
+        warning.style.display = 'block';
+      } else {
+        warning.style.display = 'none';
+      }
       updateSliderFill();
     });
+    menuConfirmToggle.addEventListener('click', () => {
+      menuConfirmationEnabled = !menuConfirmationEnabled;
+      if (menuConfirmationEnabled) {
+        menuConfirmToggle.textContent = 'ON';
+        menuConfirmToggle.classList.remove('off');
+        document.getElementById('menu-confirm-val').textContent = 'ON';
+      } else {
+        menuConfirmToggle.textContent = 'OFF';
+        menuConfirmToggle.classList.add('off');
+        document.getElementById('menu-confirm-val').textContent = 'OFF';
+      }
+    });
+    startingCardsSlider.addEventListener('input', (e) => {
+      startingCardsCount = parseInt(e.target.value, 10);
+      document.getElementById('starting-cards-val').textContent = startingCardsCount;
+      updateStartingCardsFill();
+    });
     updateSliderFill();
+    updateStartingCardsFill();
 
   </script>
 </body>
