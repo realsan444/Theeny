@@ -450,6 +450,7 @@
       to   { opacity: 0; transform: translateY(-44px) scale(0.82); }
     }
     .card.playing { animation: playOut 0.22s ease forwards; pointer-events: none; }
+    .card.dealing  { animation: dealIn 0.4s cubic-bezier(0.22,1,0.36,1) both; }
 
     .card.selected {
       transform: translateY(-22px) !important;
@@ -934,7 +935,7 @@
       const deck = buildDeck();
       G = { deck, playerHand:[], aiHand:[], playerHP:3, aiHP:3,
             playerFX:makeFX(), aiFX:makeFX(),
-            phase:'player-select', pendingPlay:null, animating:false, log:[],
+            phase:'player-select', pendingPlay:null, pendingDealAnim:null, animating:false, log:[],
             playerDefenseZone:[], aiDefenseZone:[] };
       for (let i=0;i<startingCardsCount;i++) { G.playerHand.push(drawFromDeck()); G.aiHand.push(drawFromDeck()); }
       renderAll();
@@ -942,6 +943,11 @@
       updateDiscard(null);
       setStatus('select a card from your hand');
       setTurn('player');
+      document.querySelectorAll('#player-hand .card').forEach((el, i) => {
+        el.style.animationDelay = `${i * 90}ms`;
+        el.classList.add('dealing');
+        el.addEventListener('animationend', () => { el.style.animationDelay = ''; }, { once: true });
+      });
     }
 
     function drawFromDeck() {
@@ -1211,6 +1217,14 @@
       const hand=isP?G.playerHand:G.aiHand;
       const sFX=isP?G.playerFX:G.aiFX, oFX=isP?G.aiFX:G.playerFX;
       const card=hand[handIndex]; if(!card)return;
+      
+      // Play card sound effect
+      const cardSound = document.getElementById('card-sound');
+      if (cardSound) {
+        cardSound.currentTime = 0; // Reset to start for rapid plays
+        cardSound.play().catch(e => console.log('Card sound play failed:', e));
+      }
+      
       if (isP) {
         G.animating=true;
         const els=document.querySelectorAll('#player-hand .card');
@@ -1222,17 +1236,147 @@
       if(card.type!=='defense') updateDiscard(card);
       setTimeout(()=>{
         applyEffect(card, who, sFX, oFX, opts);
-        if(isP){renderPlayerHand();G.animating=false;}else{renderAiHand();}
-        renderHearts('player-hearts',G.playerHP);
-        renderHearts('ai-hearts',G.aiHP);
-        renderEffects();
-        renderDefenseZone();
-        checkGameOver();
-        if(G.phase!=='gameover'){
-          if(isP) endPlayerTurn();
-          else    endAiTurn();
-        }
+        const dealCards = G.pendingDealAnim;
+        G.pendingDealAnim = null;
+        const finishTurn = () => {
+          if(isP){renderPlayerHand();G.animating=false;}else{renderAiHand();}
+          renderHearts('player-hearts',G.playerHP);
+          renderHearts('ai-hearts',G.aiHP);
+          renderEffects();
+          renderDefenseZone();
+          checkGameOver();
+          if(G.phase!=='gameover'){
+            if(isP) endPlayerTurn();
+            else    endAiTurn();
+          }
+        };
+        if(dealCards && isP) showFiveCardDeal(dealCards, finishTurn);
+        else finishTurn();
       }, isP?220:0);
+    }
+
+    // ── 5-card cinematic deal animation ────────────────────────────────────────
+    function showFiveCardDeal(drawnCards, done) {
+      const deckEl = document.getElementById('deck-pile');
+      const deckR  = deckEl.getBoundingClientRect();
+      const sx = deckR.left + deckR.width / 2;
+      const sy = deckR.top  + deckR.height / 2;
+      const W  = window.innerWidth, H = window.innerHeight;
+
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:500;pointer-events:none;';
+      document.body.appendChild(ov);
+
+      const bg = document.createElement('div');
+      bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);opacity:0;transition:opacity 0.25s;';
+      ov.appendChild(bg);
+      requestAnimationFrame(() => requestAnimationFrame(() => bg.style.opacity = '1'));
+
+      // Remove drawn cards from hand so we can add them back one by one
+      G.playerHand.splice(G.playerHand.length - drawnCards.length, drawnCards.length);
+      renderPlayerHand();
+
+      const n = drawnCards.length;
+      const cW = 74, cH = 104, gap = 14;
+      const totalW = n * cW + (n - 1) * gap;
+      const baseX  = W / 2 - totalW / 2;
+      const destY  = H / 2 - cH / 2;
+      const tilts  = [-14, -7, 0, 7, 14];
+
+      const items = drawnCards.map((card, i) => {
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = `position:fixed;left:${sx-cW/2}px;top:${sy-cH/2}px;width:${cW}px;height:${cH}px;perspective:700px;`;
+
+        const flipper = document.createElement('div');
+        flipper.style.cssText = 'position:absolute;inset:0;transform-style:preserve-3d;transform:rotate(0deg) scale(0.55);transition:none;';
+
+        const back = document.createElement('div');
+        back.style.cssText = 'position:absolute;inset:0;border-radius:9px;background:linear-gradient(135deg,#111,#0a0a0a);border:1.5px solid rgba(255,255,255,0.1);backface-visibility:hidden;-webkit-backface-visibility:hidden;';
+        const pat = document.createElement('div');
+        pat.style.cssText = 'position:absolute;inset:5px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);background:repeating-linear-gradient(45deg,rgba(255,255,255,0.02),rgba(255,255,255,0.02) 2px,transparent 2px,transparent 7px);';
+        back.appendChild(pat);
+
+        const front = document.createElement('div');
+        const imgSrc = CARD_IMAGES[card.id];
+        front.style.cssText = 'position:absolute;inset:0;border-radius:9px;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.7);backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;';
+        if (imgSrc) {
+          const img = document.createElement('img');
+          img.src = imgSrc;
+          img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:9px;';
+          front.appendChild(img);
+          const lbl = document.createElement('div');
+          lbl.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.62);color:#fff;font-size:0.48rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;text-align:center;padding:4px;border-radius:0 0 8px 8px;font-family:inherit;';
+          lbl.textContent = card.name;
+          front.appendChild(lbl);
+        } else {
+          const lbl = document.createElement('div');
+          lbl.style.cssText = 'font-size:0.52rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:rgba(0,0,0,0.82);text-align:center;padding:7px 5px;font-family:inherit;';
+          lbl.textContent = card.name;
+          front.appendChild(lbl);
+        }
+
+        flipper.appendChild(back);
+        flipper.appendChild(front);
+        wrapper.appendChild(flipper);
+        ov.appendChild(wrapper);
+        return { wrapper, flipper, tilt: tilts[i] || 0 };
+      });
+
+      // Phase 1: fly from deck to spread positions
+      items.forEach(({ wrapper, flipper, tilt }, i) => {
+        const destX = baseX + i * (cW + gap);
+        setTimeout(() => {
+          wrapper.style.transition = 'left 0.45s cubic-bezier(0.22,1,0.36,1), top 0.45s cubic-bezier(0.22,1,0.36,1)';
+          flipper.style.transition  = 'transform 0.45s cubic-bezier(0.22,1,0.36,1)';
+          wrapper.style.left = destX + 'px';
+          wrapper.style.top  = destY + 'px';
+          flipper.style.transform = `rotate(${tilt}deg) scale(1)`;
+        }, 30 + i * 110);
+      });
+
+      // Phase 2: flip each card to reveal front
+      const flyDone = 30 + 110 * (n - 1) + 460 + 120;
+      items.forEach(({ flipper, tilt }, i) => {
+        setTimeout(() => {
+          flipper.style.transition = 'transform 0.4s ease';
+          flipper.style.transform  = `rotate(${tilt}deg) scale(1) rotateY(180deg)`;
+        }, flyDone + i * 110);
+      });
+
+      // Phase 3: shoot cards one by one into the player's hand
+      const allFlipped = flyDone + 110 * (n - 1) + 400 + 500;
+      setTimeout(() => {
+        const handEl = document.getElementById('player-hand');
+        const handR  = handEl.getBoundingClientRect();
+        const handCX = handR.left + handR.width / 2;
+        const handCY = handR.top  + handR.height / 2;
+
+        items.forEach(({ wrapper, flipper }, i) => {
+          setTimeout(() => {
+            wrapper.style.transition = 'left 0.32s cubic-bezier(0.4,0,1,1), top 0.32s cubic-bezier(0.4,0,1,1)';
+            flipper.style.transition = 'transform 0.32s cubic-bezier(0.4,0,1,1), opacity 0.2s 0.18s';
+            wrapper.style.left = (handCX - cW / 2) + 'px';
+            wrapper.style.top  = (handCY - cH / 2) + 'px';
+            flipper.style.transform = 'rotate(0deg) scale(0.4) rotateY(180deg)';
+            flipper.style.opacity   = '0';
+            // Add this card to the hand as it arrives
+            setTimeout(() => {
+              G.playerHand.push(drawnCards[i]);
+              renderPlayerHand();
+              const handCards = document.querySelectorAll('#player-hand .card');
+              const newEl = handCards[handCards.length - 1];
+              if (newEl) { newEl.style.animationDelay = '0ms'; newEl.classList.add('dealing'); }
+            }, 260);
+          }, i * 130);
+        });
+
+        const lastLand = 130 * (n - 1) + 420;
+        setTimeout(() => {
+          bg.style.transition = 'opacity 0.2s';
+          bg.style.opacity = '0';
+          setTimeout(() => { ov.remove(); done(); }, 220);
+        }, lastLand);
+      }, allFlipped);
     }
 
     // ── Apply card effect ──────────────────────────────────────────────────────
@@ -1308,9 +1452,15 @@
           if(c==='hot'){sFX.hot+=2;addLog(`${sN}: Doug — HoT x2`);}
           else{if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}dealDmg(isP,2);addLog(`${sN}: Doug — 2 DMG`);}
           break;}
-        case 'five_cards':
-          for(let i=0;i<5;i++){if(isP)G.playerHand.push(drawFromDeck());else G.aiHand.push(drawFromDeck());}
+        case 'five_cards': {
+          const drawn = [];
+          for(let i=0;i<5;i++){
+            const c = drawFromDeck();
+            if(isP){ G.playerHand.push(c); drawn.push(c); } else { G.aiHand.push(c); }
+          }
+          if(isP) G.pendingDealAnim = drawn;
           addLog(`${sN}: 5 Cards — drew 5`); break;
+        }
         case 'hoverboard':
           sFX.dodgeCharges+=sFX.buffed==='dodge'?Infinity:1; addLog(`${sN}: Hover Board — dodge 1`); pushDefZone(isP,card); break;
         case 'forcefield': case 'shield':
@@ -1681,6 +1831,7 @@
     updateStartingCardsFill();
 
   </script>
-  <div class="version-text">1.6-beta</div>
+  <audio id="card-sound" src="audio/card.mp3"></audio>
+  <div class="version-text">1.7-beta</div>
 </body>
 </html>
