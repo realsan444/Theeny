@@ -10,6 +10,8 @@ To play it, go to the [Crossovers](https://ashergame.pages.dev/) (Requires a key
 
 # Known Issues:
 - The Arthur Morgan shot can one-shot. Impending fixes.
+- bedrock cannot block insta kills, fix soon
+- jump makes u lose a turn. Fix soon
 # Updates
 ## Version 1.8.3-beta
 - made all text more confortable
