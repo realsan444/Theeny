@@ -7,6 +7,9 @@ To play it, go to the [Asher games website](https://ashergame.pages.dev/) (Requi
 - made by santhedev and bakedcake
 
 # Updates
+### Version 1.55-beta
+- Added so if you got the key right it would save and you wouldn't have to do it again.
+
 ### Version 1.5-beta
 - Added a slider for how many cards you start with
 - Added a confirmation menu for being in-game.
