@@ -6,9 +6,16 @@ To play it, go to the [Crossworlds website](https://ashergame.pages.dev/) (Requi
 
 - made by santhedev and bakedcake
 
-### Latest Version: 1.7-beta
+### Latest Version: 1.8-beta
 
 # Updates
+### Version 1.8-beta
+- Reaper Leviathan now has an image
+- Sonic Shoes now has an image
+- Forcefield now has an image
+- Now the hearts have images (Don't question them)
+- Now there is an animation for when you place down a card.
+
 ### Version 1.7-beta
 - 5 cards has a really really really good animation
 - 5 cards now have an image
