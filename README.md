@@ -6,9 +6,16 @@ To play it, go to the [Crossworlds website](https://ashergame.pages.dev/) (Requi
 
 - made by santhedev and bakedcake
 
-### Latest Version: 1.6-beta
+### Latest Version: 1.7-beta
 
 # Updates
+### Version 1.7-beta
+- 5 cards has a really really really good animation
+- 5 cards now have an image
+- There is now a sound for placing a card down!
+
+**Version created by santhedev and bakedcake!**
+
 ### Version 1.6-beta
 - Added a version display
 - AI is now fixed
