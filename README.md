@@ -6,9 +6,12 @@ To play it, go to the [Crossworlds website](https://ashergame.pages.dev/) (Requi
 
 - made by santhedev and bakedcake
 
-### Latest Version: 1.8-beta
+### Latest Version: 1.8.1-beta
 
 # Updates
+### Version 1.8.1-beta
+- You can now give the Yoshi Egg to your opponent
+
 ### Version 1.8-beta
 - Reaper Leviathan now has an image
 - Sonic Shoes now has an image
