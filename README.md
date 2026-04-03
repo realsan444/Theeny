@@ -9,6 +9,7 @@ To play it, go to the [Asher games website](https://ashergame.pages.dev/) (Requi
 # Updates
 ### Version 1.55-beta
 - Added so if you got the key right it would save and you wouldn't have to do it again.
+**Modified by bakedcake**
 
 ### Version 1.5-beta
 - Added a slider for how many cards you start with
@@ -19,10 +20,12 @@ To play it, go to the [Asher games website](https://ashergame.pages.dev/) (Requi
 - Fixed a bug where sometimes the AI wouldn't play.
 - Added 0.5 as the minimum seconds to the AI thinking time, or else the AI would break.
 - Fixed a bug where if the AI was stunned and you killed them while they were stunned the You Win screen wouldn't appear.
+**Modified by bakedcake**
 
 ### Version 1.25-beta
 - Added a favicon!
 - Made sure that bot defaults at 0, since the thinking times do not work as of right now.
+**Modified by bakedcake**
 
 ### Version 1.2-beta
 - Fixed the Samzus Laser bug AGAIN
@@ -30,7 +33,9 @@ To play it, go to the [Asher games website](https://ashergame.pages.dev/) (Requi
 - Fixed a problem with Snap Your Knees not appearing as a card with an image
 - Added Soul as an image
 - Added Hoverboard as an image
+**Modified by bakedcake**
 
 ### Version 1.1-beta
 - Fixed a bug where the Samzus Laser image wouldn't appear
 - You need a key to unlock the project, since it is in beta.
+**Modified by bakedcake**
