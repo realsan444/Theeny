@@ -1224,6 +1224,7 @@
       black_circle:[{text:'Buff Shields → ∞',cls:'blue',val:'shield'},{text:'Buff Dodge → ∞',cls:'green',val:'dodge'}],
       meat:        [{text:'Heal Self +1 HP',cls:'green',val:'self'},{text:'Heal AI +1 HP',cls:'blue',val:'opp'}],
       soul:        [{text:'Heal Self +1 HP',cls:'green',val:'self'},{text:'Heal AI +1 HP',cls:'blue',val:'opp'}],
+      yoshi_egg:  [{text:'Make Self Untouchable',cls:'gold',val:'self'},{text:'Make AI Untouchable',cls:'blue',val:'opp'}],
     };
 
     function playPending(opts) {
@@ -1493,7 +1494,16 @@
 
       switch(id) {
         case 'illumina':    sFX.illumina=true; addLog(`${sN}: Illumina active`); break;
-        case 'yoshi_egg':   oFX.untouchable=true; addLog(`${sN}: ${oN} is untouchable (Yoshi Egg)`); break;
+        case 'yoshi_egg':
+          const target = opts?.choice || 'opp';
+          if (target === 'self') {
+            sFX.untouchable = true;
+            addLog(`${sN}: Self is untouchable (Yoshi Egg)`);
+          } else {
+            oFX.untouchable = true;
+            addLog(`${sN}: ${oN} is untouchable (Yoshi Egg)`);
+          }
+          break;
         case 'pac_man':     sFX.pacManCharges=sFX.buffed==='pac_man'?Infinity:5; addLog(`${sN}: Pac Man — absorbs 5 attacks`); pushDefZone(isP,card); break;
         case 'bedrock':     sFX.bedrockActive=true; addLog(`${sN}: Bedrock active`); pushDefZone(isP,card); break;
         case 'freddy_mask': sFX.freddyCharges=sFX.buffed==='freddy'?Infinity:2; addLog(`${sN}: Freddy Mask — 2 blocks`); pushDefZone(isP,card); break;
