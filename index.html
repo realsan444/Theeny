@@ -500,6 +500,54 @@
       z-index: 0;
     }
 
+    /* Card info panel */
+    .card-info-panel {
+      position: absolute; bottom: 100%; left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      background: rgba(0,0,0,0.9);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      min-width: 280px;
+      max-width: 320px;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+    }
+    .card-info-panel.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(-100%);
+    }
+    .card-info-title {
+      font-size: 0.52rem; font-weight: 800; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #fff;
+      margin-bottom: 6px;
+      text-align: center;
+      word-wrap: break-word;
+    }
+    .card-info-desc {
+      font-size: 0.42rem; font-weight: 400; line-height: 1.3;
+      color: rgba(255,255,255,0.8);
+      text-align: center;
+      word-wrap: break-word;
+    }
+    .card-info-type {
+      display: inline-block; padding: 3px 8px;
+      border-radius: 4px; font-size: 0.32rem;
+      font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; margin-top: 6px;
+      word-wrap: break-word;
+    }
+    .card-info-type.damage { background: rgba(255,0,0,0.7); color: #fff; }
+    .card-info-type.heal { background: rgba(0,255,100,0.7); color: #000; }
+    .card-info-type.defense { background: rgba(0,100,255,0.7); color: #fff; }
+    .card-info-type.special { background: rgba(255,200,0,0.7); color: #000; }
+    .card-info-type.instakill { background: rgba(150,0,0,0.7); color: #fff; }
+    .card-info-type.utility { background: rgba(100,100,100,0.7); color: #000; }
+
     /* Defense zone */
     .defense-label {
       font-size: 0.48rem; font-weight: 700; letter-spacing: 0.45em;
@@ -549,6 +597,12 @@
       pointer-events: none; z-index: 50; opacity: 0; transition: opacity 0.08s;
     }
     .red-flash.active { opacity: 1; }
+    
+    .heal-flash {
+      position: absolute; inset: 0; background: rgba(0,255,100,0.25);
+      pointer-events: none; z-index: 50; opacity: 0; transition: opacity 0.15s;
+    }
+    .heal-flash.active { opacity: 1; }
 
     .dumb-ah {
       position: absolute; inset: 0; display: flex;
@@ -834,8 +888,16 @@
 
     <!-- Overlays -->
     <div class="red-flash" id="red-flash"></div>
+    <div class="heal-flash" id="heal-flash"></div>
     <div class="dumb-ah" id="dumb-ah"><span class="dumb-ah-text">dumb ah</span></div>
     <div class="action-notif" id="action-notif"><span class="action-notif-text" id="action-notif-text"></span></div>
+    
+    <!-- Card info panel -->
+    <div class="card-info-panel" id="card-info-panel">
+      <div class="card-info-title" id="card-info-title"></div>
+      <div class="card-info-desc" id="card-info-desc"></div>
+      <div class="card-info-type" id="card-info-type"></div>
+    </div>
 
     <!-- Target selection overlay -->
     <div class="game-overlay hidden" id="target-overlay">
@@ -1036,6 +1098,9 @@
       }
       const t=document.createElement('div'); t.className='card-title'; t.textContent=card.name||'';
       el.appendChild(t);
+      // Add hover events for card info panel
+      el.addEventListener('mouseenter', () => showCardInfo(card));
+      el.addEventListener('mouseleave', () => hideCardInfo());
       el.addEventListener('click', e=>{ e.stopPropagation(); onCardClick(index); });
       return el;
     }
@@ -1220,11 +1285,12 @@
     const CHOICE_OPTS = {
       snap_knee:   [{text:'1 DMG to AI',cls:'red',val:'dmg'},{text:'Stun AI 1 turn',cls:'gold',val:'stun'}],
       power_mush:  [{text:'Fire — 2 DMG',cls:'red',val:'fire'},{text:'Ice — Skip AI turn',cls:'blue',val:'ice'}],
-      doug:        [{text:'Heal yourself (HoT)',cls:'green',val:'hot'},{text:'2 DMG to AI',cls:'red',val:'dmg'}],
+      doug:        [{text:'Heal Self (HoT)',cls:'green',val:'hot'},{text:'Heal AI (HoT)',cls:'blue',val:'hot_opp'}],
       black_circle:[{text:'Buff Shields → ∞',cls:'blue',val:'shield'},{text:'Buff Dodge → ∞',cls:'green',val:'dodge'}],
       meat:        [{text:'Heal Self +1 HP',cls:'green',val:'self'},{text:'Heal AI +1 HP',cls:'blue',val:'opp'}],
       soul:        [{text:'Heal Self +1 HP',cls:'green',val:'self'},{text:'Heal AI +1 HP',cls:'blue',val:'opp'}],
       yoshi_egg:  [{text:'Make Self Untouchable',cls:'gold',val:'self'},{text:'Make AI Untouchable',cls:'blue',val:'opp'}],
+      sonic_shoes:[{text:'Dodge Self 3 attacks',cls:'green',val:'self'},{text:'Dodge AI 3 attacks',cls:'blue',val:'opp'}],
     };
 
     function playPending(opts) {
@@ -1321,6 +1387,14 @@
       const hand=isP?G.playerHand:G.aiHand;
       const sFX=isP?G.playerFX:G.aiFX, oFX=isP?G.aiFX:G.playerFX;
       const card=hand[handIndex]; if(!card)return;
+      
+      // Play card sound effect
+      const cardSound = document.getElementById('card-sound');
+      if (cardSound) {
+        cardSound.currentTime = 0; // Reset to start for rapid plays
+        cardSound.play().catch(e => console.log('Card sound play failed:', e));
+      }
+      
       if (isP) {
         G.animating=true;
         const cardEls=document.querySelectorAll('#player-hand .card');
@@ -1495,8 +1569,8 @@
       switch(id) {
         case 'illumina':    sFX.illumina=true; addLog(`${sN}: Illumina active`); break;
         case 'yoshi_egg':
-          const target = opts?.choice || 'opp';
-          if (target === 'self') {
+          const yoshiTarget = opts?.choice || 'opp';
+          if (yoshiTarget === 'self') {
             sFX.untouchable = true;
             addLog(`${sN}: Self is untouchable (Yoshi Egg)`);
           } else {
@@ -1526,7 +1600,9 @@
           break;}
         case 'ultra_meat':
           if(isP)G.playerHP=Math.min(3,G.playerHP+2);else G.aiHP=Math.min(3,G.aiHP+2);
-          addLog(`${sN}: Ultra Meat — +2 HP`); break;
+          addLog(`${sN}: Ultra Meat — +2 HP`);
+          showHealEffect(isP);
+          break;
         case 'knife':
           if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
           dealDmg(isP,1); addLog(`${sN}: Knife — 1 DMG`); break;
@@ -1557,9 +1633,27 @@
           break;
         case 'doug':{
           const c=opts?.choice||'hot';
-          if(c==='hot'){sFX.hot+=2;addLog(`${sN}: Doug — HoT x2`);}
-          else{if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}dealDmg(isP,2);addLog(`${sN}: Doug — 2 DMG`);}
+          if(c==='hot_opp'){
+            oFX.hot+=2;addLog(`${sN}: Doug — HoT x2 on ${oN}`);
+            showHealEffect(false); // AI healing, no effect
+          } else if(c==='hot'){
+            sFX.hot+=2;addLog(`${sN}: Doug — HoT x2`);
+            showHealEffect(isP); // Player healing, show effect
+          } else{
+            if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}dealDmg(isP,2);addLog(`${sN}: Doug — 2 DMG`);
+          }
           break;}
+        case 'sonic_shoes':
+          const sonicTarget = opts?.choice || 'self';
+          if (sonicTarget === 'self') {
+            sFX.dodgeCharges+=sFX.buffed==='dodge'?Infinity:3; 
+            addLog(`${sN}: Sonic Shoes — dodge 3 attacks`);
+          } else {
+            oFX.dodgeCharges+=oFX.buffed==='dodge'?Infinity:3; 
+            addLog(`${sN}: Sonic Shoes — ${oN} dodge 3 attacks`);
+          }
+          pushDefZone(isP,card);
+          break;
         case 'five_cards': {
           const drawn = [];
           for(let i=0;i<5;i++){
@@ -1577,6 +1671,7 @@
           const c=opts?.choice||'self';
           if(c==='opp'){if(isP)G.aiHP=Math.min(3,G.aiHP+1);else G.playerHP=Math.min(3,G.playerHP+1);addLog(`${sN}: ${card.name} — healed ${oN} +1`);}
           else{if(isP)G.playerHP=Math.min(3,G.playerHP+1);else G.aiHP=Math.min(3,G.aiHP+1);addLog(`${sN}: ${card.name} — healed self +1`);}
+          showHealEffect(isP);
           break;}
         case 'sonic_shoes':
           sFX.dodgeCharges+=sFX.buffed==='dodge'?Infinity:3; addLog(`${sN}: Sonic Shoes — dodge 3`); pushDefZone(isP,card); break;
@@ -1661,6 +1756,52 @@
       setTimeout(() => el.classList.remove('active'), 1500);
     }
 
+    function showHealEffect(isPlayerHeal = true) {
+      // Only show heal effect for player healing, not AI healing
+      if (!isPlayerHeal) return;
+      
+      const el = document.getElementById('heal-flash');
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 800);
+    }
+
+    function showCardInfo(card) {
+      const panel = document.getElementById('card-info-panel');
+      const title = document.getElementById('card-info-title');
+      const desc = document.getElementById('card-info-desc');
+      const type = document.getElementById('card-info-type');
+      
+      title.textContent = card.name || '';
+      desc.textContent = card.desc || '';
+      
+      // Set type indicator
+      type.className = 'card-info-type';
+      switch(card.type) {
+        case 'damage': type.classList.add('damage'); type.textContent = 'DAMAGE'; break;
+        case 'heal': type.classList.add('heal'); type.textContent = 'HEAL'; break;
+        case 'defense': type.classList.add('defense'); type.textContent = 'DEFENSE'; break;
+        case 'special': type.classList.add('special'); type.textContent = 'SPECIAL'; break;
+        case 'instakill': type.classList.add('instakill'); type.textContent = 'INSTAKILL'; break;
+        case 'utility': type.classList.add('utility'); type.textContent = 'UTILITY'; break;
+        default: type.textContent = ''; break;
+      }
+      
+      // Position panel near the card
+      const cardEl = event.target;
+      const cardRect = cardEl.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      
+      panel.style.left = (cardRect.left + cardRect.width/2 - panelRect.width/2) + 'px';
+      panel.style.top = (cardRect.top - panelRect.height - 10) + 'px';
+      
+      panel.classList.add('active');
+    }
+
+    function hideCardInfo() {
+      const panel = document.getElementById('card-info-panel');
+      panel.classList.remove('active');
+    }
+
     function wipeShields(fx, wipeIsPlayer) {
       fx.shieldCharges=0;fx.freddyCharges=0;fx.bedrockActive=false;
       fx.pacManCharges=0;fx.dodgeCharges=0;fx.buffed=null;
@@ -1671,7 +1812,7 @@
     // ── Turn management ────────────────────────────────────────────────────────
     function endPlayerTurn() {
       console.log('Ending player turn, phase:', G.phase);
-      if(G.playerFX.hot>0){G.playerFX.hot--;G.playerHP=Math.min(3,G.playerHP+1);addLog(`You: HoT +1 HP`);}
+      if(G.playerFX.hot>0){G.playerFX.hot--;G.playerHP=Math.min(3,G.playerHP+1);addLog(`You: HoT +1 HP`);showHealEffect(true);}
       if(G.aiFX.stun>0){G.aiFX.stun--;addLog(`AI stunned — skips turn`);endAiTurn();return;}
       if(G.aiFX.missedTurns>0){G.aiFX.missedTurns--;addLog(`AI misses a turn`);endAiTurn();return;}
       
@@ -1686,7 +1827,7 @@
 
     function endAiTurn() {
       console.log('Ending AI turn, phase:', G.phase);
-      if(G.aiFX.hot>0){G.aiFX.hot--;G.aiHP=Math.min(3,G.aiHP+1);addLog(`AI: HoT +1 HP`);}
+      if(G.aiFX.hot>0){G.aiFX.hot--;G.aiHP=Math.min(3,G.aiHP+1);addLog(`AI: HoT +1 HP`);showHealEffect(false);}
       if(G.playerFX.stun>0){
         G.playerFX.stun--;
         addLog(`You are stunned — turn skipped`);
@@ -1939,6 +2080,6 @@
     updateStartingCardsFill();
 
   </script>
-  <div class="version-text">1.8-beta</div>
+  <div class="version-text">1.8.2-beta</div>
 </body>
 </html>
