@@ -1,3 +1,6 @@
+### THIS GITHUB IS NO LONGER BEING UPDATED AS WE DO NOT NEED PAGES ANYMORE.
+
+
 # Crossovers card game!
 **Welcome to** ***Crossovers!***
 
