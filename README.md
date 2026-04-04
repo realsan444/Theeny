@@ -6,20 +6,30 @@ To play it, go to the [Crossovers](https://ashergame.pages.dev/) (Requires a key
 
 - made by santhedev and bakedcake
 
-### Latest Version: 1.8.3-beta
+
+### Latest Version: 1.8.4-beta
+
 
 # Known Issues:
 - The Arthur Morgan shot can one-shot. Impending fixes.
 - bedrock cannot block insta kills, fix soon
-- jump makes u lose a turn. Fix soon
 # Updates
-## Version 1.8.3-beta
+### Version 1.8.4-beta
+- Fixed jump making you lose a turn
+- Added slight ui improvements
+- fixed the snap after u place down a card
+- slight improvements to "5 cards" animation.
+- added a 'max' amount of cards which is 12.
+- Game is soon to be out of beta and to be fully playable
+
+  **Version created by santhedev**
+### Version 1.8.3-beta
 - made all text more confortable
 - Tooltip is now at the back of the card
 - ai cards are centered
 - cards are bigger
   
-** version made by santhedev **
+**version made by santhedev**
 ### Version 1.8.2-beta
 - Tooltip now shows what a card does
 - Heal effect
