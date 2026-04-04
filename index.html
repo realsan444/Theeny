@@ -449,6 +449,12 @@
       flex-shrink: 1;
       perspective: 800px;
     }
+    .card.collapsing {
+      width: 0 !important; min-width: 0 !important; height: 0 !important;
+      opacity: 0; margin: 0 -4px !important; padding: 0 !important;
+      overflow: hidden; pointer-events: none;
+      transition: width 0.35s cubic-bezier(0.22,1,0.36,1), min-width 0.35s cubic-bezier(0.22,1,0.36,1), height 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.12s ease, margin 0.35s cubic-bezier(0.22,1,0.36,1);
+    }
     .card-inner {
       position: absolute; inset: 0; border-radius: 9px;
       transform-style: preserve-3d;
@@ -648,11 +654,6 @@
     }
     .red-flash.active { opacity: 1; }
     
-    .heal-flash {
-      position: absolute; inset: 0; background: rgba(0,255,100,0.25);
-      pointer-events: none; z-index: 50; opacity: 0; transition: opacity 0.15s;
-    }
-    .heal-flash.active { opacity: 1; }
 
     .dumb-ah {
       position: absolute; inset: 0; display: flex;
@@ -938,7 +939,6 @@
 
     <!-- Overlays -->
     <div class="red-flash" id="red-flash"></div>
-    <div class="heal-flash" id="heal-flash"></div>
     <div class="dumb-ah" id="dumb-ah"><span class="dumb-ah-text">nuh uh</span></div>
     <div class="action-notif" id="action-notif"><span class="action-notif-text" id="action-notif-text"></span></div>
     
@@ -1005,7 +1005,7 @@
       {id:'jump',        name:'Jump',               desc:'1 dmg to bot and clanker loses turn hahaha',        type:'damage',   count:3},
       {id:'snap_knee',   name:'Snap Your Knee',     desc:'pick: 1 dmg to bot OR stun them for a turn.',                      type:'special',  count:3},
       {id:'arthur',      name:'Arthur Morgan Shot', desc:'goes thru all shields. max 3 dmg. arthur never misses.',           type:'damage',   count:2},
-      {id:'doug',        name:'Doug the Bug',       desc:'pick: heal 1hp per turn x2 OR drop 2 dmg. doug said choose.',     type:'special',  count:3},
+      {id:'doug',        name:'Doug the Bug',       desc:'pick: drop 2 dmg OR quick 1 dmg. doug said choose.',     type:'special',  count:3},
       {id:'five_cards',  name:'5 Cards',            desc:'yoink 5 extra cards from the deck no gey.',                        type:'utility',  count:3},
       {id:'hoverboard',  name:'Hover Board',        desc:'hoverboard goes zoom. dodges 1 incoming attack.',                  type:'defense',  count:3},
       {id:'forcefield',  name:'Forcefield',         desc:'blocks 1 attack period. no discussion.',                           type:'defense',  count:5},
@@ -1029,7 +1029,7 @@
 
     function makeFX() {
       return { shieldCharges:0, freddyCharges:0, bedrockActive:false, pacManCharges:0,
-               dodgeCharges:0, stun:0, missedTurns:0, hot:0,
+               dodgeCharges:0, stun:0, missedTurns:0,
                untouchable:false, illumina:false, buffed:null };
     }
 
@@ -1270,7 +1270,6 @@
       if (fx.dodgeCharges>0) chips.push({cls:'dodge',text:fx.buffed==='dodge'?'Dodge ∞':`Dodge ×${fx.dodgeCharges}`});
       if (fx.stun>0)         chips.push({cls:'stun',  text:`Stun ${fx.stun}`});
       if (fx.missedTurns>0)  chips.push({cls:'stun',  text:`Miss ${fx.missedTurns}`});
-      if (fx.hot>0)          chips.push({cls:'hot',   text:`HoT ${fx.hot}`});
       if (fx.untouchable)    chips.push({cls:'special',text:'Untouchable'});
       if (fx.illumina)       chips.push({cls:'special',text:'Illumina'});
       chips.forEach(c=>{ const chip=document.createElement('div'); chip.className=`effect-chip ${c.cls}`; chip.textContent=c.text; el.appendChild(chip); });
@@ -1348,7 +1347,7 @@
     const CHOICE_OPTS = {
       snap_knee:   [{text:'1 DMG to AI',cls:'red',val:'dmg'},{text:'Stun AI 1 turn',cls:'gold',val:'stun'}],
       power_mush:  [{text:'Fire — 2 DMG',cls:'red',val:'fire'},{text:'Ice — Skip AI turn',cls:'blue',val:'ice'}],
-      doug:        [{text:'Heal Self (HoT)',cls:'green',val:'hot'},{text:'Heal AI (HoT)',cls:'blue',val:'hot_opp'}],
+      doug:        [{text:'2 DMG',cls:'red',val:'dmg'},{text:'1 DMG',cls:'red',val:'dmg1'}],
       black_circle:[{text:'Buff Shields → ∞',cls:'blue',val:'shield'},{text:'Buff Dodge → ∞',cls:'green',val:'dodge'}],
       meat:        [{text:'Heal Self +1 HP',cls:'green',val:'self'},{text:'Heal AI +1 HP',cls:'blue',val:'opp'}],
       soul:        [{text:'Heal Self +1 HP',cls:'green',val:'self'},{text:'Heal AI +1 HP',cls:'blue',val:'opp'}],
@@ -1395,9 +1394,9 @@
 
       if (isPlayer) srcEl.classList.add('playing');
 
-      // Build face-up card clone (same for both player and AI)
+      // Build face-up card clone
       const clone = document.createElement('div');
-      clone.style.cssText = `position:fixed;left:${srcR.left}px;top:${srcR.top}px;width:${cW}px;height:${cH}px;border-radius:9px;z-index:400;pointer-events:none;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.7);overflow:hidden;transform-origin:center center;`;
+      clone.style.cssText = `position:fixed;left:0;top:0;width:${cW}px;height:${cH}px;border-radius:9px;z-index:400;pointer-events:none;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.7);overflow:hidden;transform-origin:center center;will-change:transform,opacity;`;
 
       if (imgSrc) {
         const img = document.createElement('img');
@@ -1427,21 +1426,69 @@
       } else {
         destR = discR;
       }
-      const scale = Math.min(destR.width / cW, destR.height / cH);
-      const destX = destR.left + (destR.width  - cW * scale) / 2;
-      const destY = destR.top  + (destR.height - cH * scale) / 2;
 
-      // Fly + shrink simultaneously; on landing snap-update destination
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        clone.style.transition = 'left 0.38s cubic-bezier(0.4,0,0.2,1), top 0.38s cubic-bezier(0.4,0,0.2,1), transform 0.38s cubic-bezier(0.4,0,0.2,1)';
-        clone.style.left      = destX + 'px';
-        clone.style.top       = destY + 'px';
-        clone.style.transform = `scale(${scale})`;
-        setTimeout(() => {
-          if (card.type !== 'defense') updateDiscard(card);
-          clone.remove();
-        }, 390);
-      }));
+      // Compute centres
+      const srcCX = srcR.left + srcR.width / 2;
+      const srcCY = srcR.top  + srcR.height / 2;
+      const endScale = Math.min(destR.width / cW, destR.height / cH);
+      const destCX = destR.left + destR.width / 2;
+      const destCY = destR.top  + destR.height / 2;
+      const dx = destCX - srcCX;
+      const dy = destCY - srcCY;
+
+      // Arc midpoint — lift card upward in an arc
+      const arcPeak = Math.min(-40, dy * 0.35);
+      const midX = dx * 0.5;
+      const midY = dy * 0.5 + arcPeak;
+
+      // Slight tilt direction based on travel
+      const tiltDir = dx > 0 ? 1 : -1;
+
+      const totalDur = 480;
+
+      const keyframes = [
+        // 0% — start position, slight scale-up (anticipation)
+        {
+          transform: `translate(${srcCX - cW/2}px, ${srcCY - cH/2}px) scale(1) rotate(0deg)`,
+          opacity: 1,
+          offset: 0
+        },
+        // 12% — lift & pop
+        {
+          transform: `translate(${srcCX - cW/2}px, ${srcCY - cH/2 - 8}px) scale(1.08) rotate(${tiltDir * -2}deg)`,
+          opacity: 1,
+          offset: 0.12
+        },
+        // 55% — arc midpoint
+        {
+          transform: `translate(${srcCX - cW/2 + midX}px, ${srcCY - cH/2 + midY}px) scale(${0.5 + endScale * 0.5}) rotate(${tiltDir * 6}deg)`,
+          opacity: 1,
+          offset: 0.55
+        },
+        // 85% — arrive slightly past destination (overshoot)
+        {
+          transform: `translate(${destCX - cW/2 + dx * 0.02}px, ${destCY - cH/2 - 3}px) scale(${endScale * 0.95}) rotate(${tiltDir * 1}deg)`,
+          opacity: 1,
+          offset: 0.85
+        },
+        // 100% — settle
+        {
+          transform: `translate(${destCX - cW/2}px, ${destCY - cH/2}px) scale(${endScale}) rotate(0deg)`,
+          opacity: 1,
+          offset: 1
+        }
+      ];
+
+      const anim = clone.animate(keyframes, {
+        duration: totalDur,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'forwards'
+      });
+
+      anim.onfinish = () => {
+        if (card.type !== 'defense') updateDiscard(card);
+        clone.remove();
+      };
     }
 
     // ── Execute play ───────────────────────────────────────────────────────────
@@ -1462,7 +1509,12 @@
         G.animating=true;
         const cardEls=document.querySelectorAll('#player-hand .card');
         const srcEl=cardEls[handIndex];
-        if(srcEl){srcEl.classList.remove('dealing','selected'); animateCardPlay(srcEl, card, true);}
+        if(srcEl){
+          srcEl.classList.remove('dealing','selected');
+          animateCardPlay(srcEl, card, true);
+          // Smoothly collapse the slot so siblings slide together
+          requestAnimationFrame(() => srcEl.classList.add('collapsing'));
+        }
       } else {
         const backEls=document.querySelectorAll('#ai-hand .card-back');
         const srcEl=backEls[Math.min(handIndex, backEls.length-1)];
@@ -1488,7 +1540,7 @@
         };
         if(dealCards && isP) showFiveCardDeal(dealCards, finishTurn);
         else finishTurn();
-      }, isP?280:420);
+      }, isP?500:540);
     }
 
     // ── 5-card cinematic deal animation ────────────────────────────────────────
@@ -1504,49 +1556,48 @@
       document.body.appendChild(ov);
 
       const bg = document.createElement('div');
-      bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);opacity:0;transition:opacity 0.25s;';
+      bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.78);opacity:0;';
       ov.appendChild(bg);
-      requestAnimationFrame(() => requestAnimationFrame(() => bg.style.opacity = '1'));
+      bg.animate([{opacity:0},{opacity:1}],{duration:300,easing:'ease-out',fill:'forwards'});
 
-      // Remove drawn cards from hand so we can add them back one by one
       G.playerHand.splice(G.playerHand.length - drawnCards.length, drawnCards.length);
       renderPlayerHand();
 
       const n = drawnCards.length;
-      const cW = 74, cH = 104, gap = 14;
+      const cW = 80, cH = 112, gap = 16;
       const totalW = n * cW + (n - 1) * gap;
       const baseX  = W / 2 - totalW / 2;
       const destY  = H / 2 - cH / 2;
-      const tilts  = [-14, -7, 0, 7, 14];
+      const tilts  = [-12, -6, 0, 6, 12];
 
       const items = drawnCards.map((card, i) => {
         const wrapper = document.createElement('div');
-        wrapper.style.cssText = `position:fixed;left:${sx-cW/2}px;top:${sy-cH/2}px;width:${cW}px;height:${cH}px;perspective:700px;`;
+        wrapper.style.cssText = `position:fixed;left:${sx-cW/2}px;top:${sy-cH/2}px;width:${cW}px;height:${cH}px;perspective:800px;will-change:transform;`;
 
         const flipper = document.createElement('div');
-        flipper.style.cssText = 'position:absolute;inset:0;transform-style:preserve-3d;transform:rotate(0deg) scale(0.55);transition:none;';
+        flipper.style.cssText = 'position:absolute;inset:0;transform-style:preserve-3d;transform:rotate(0deg) scale(0.3);';
 
         const back = document.createElement('div');
-        back.style.cssText = 'position:absolute;inset:0;border-radius:9px;background:linear-gradient(135deg,#111,#0a0a0a);border:1.5px solid rgba(255,255,255,0.1);backface-visibility:hidden;-webkit-backface-visibility:hidden;';
+        back.style.cssText = 'position:absolute;inset:0;border-radius:10px;background:linear-gradient(135deg,#181818,#0a0a0a);border:1.5px solid rgba(255,255,255,0.12);backface-visibility:hidden;-webkit-backface-visibility:hidden;';
         const pat = document.createElement('div');
-        pat.style.cssText = 'position:absolute;inset:5px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);background:repeating-linear-gradient(45deg,rgba(255,255,255,0.02),rgba(255,255,255,0.02) 2px,transparent 2px,transparent 7px);';
+        pat.style.cssText = 'position:absolute;inset:5px;border-radius:7px;border:1px solid rgba(255,255,255,0.06);background:repeating-linear-gradient(45deg,rgba(255,255,255,0.02),rgba(255,255,255,0.02) 2px,transparent 2px,transparent 7px);';
         back.appendChild(pat);
 
         const front = document.createElement('div');
         const imgSrc = CARD_IMAGES[card.id];
-        front.style.cssText = 'position:absolute;inset:0;border-radius:9px;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.7);backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;';
+        front.style.cssText = 'position:absolute;inset:0;border-radius:10px;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.7);backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;';
         if (imgSrc) {
           const img = document.createElement('img');
           img.src = imgSrc;
-          img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:9px;';
+          img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px;';
           front.appendChild(img);
           const lbl = document.createElement('div');
-          lbl.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.62);color:#fff;font-size:0.48rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;text-align:center;padding:4px;border-radius:0 0 8px 8px;font-family:inherit;';
+          lbl.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.65);color:#fff;font-size:0.5rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;text-align:center;padding:5px;border-radius:0 0 9px 9px;font-family:inherit;';
           lbl.textContent = card.name;
           front.appendChild(lbl);
         } else {
           const lbl = document.createElement('div');
-          lbl.style.cssText = 'font-size:0.52rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:rgba(0,0,0,0.82);text-align:center;padding:7px 5px;font-family:inherit;';
+          lbl.style.cssText = 'font-size:0.54rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:rgba(0,0,0,0.82);text-align:center;padding:7px 5px;font-family:inherit;';
           lbl.textContent = card.name;
           front.appendChild(lbl);
         }
@@ -1555,64 +1606,98 @@
         flipper.appendChild(front);
         wrapper.appendChild(flipper);
         ov.appendChild(wrapper);
-        return { wrapper, flipper, tilt: tilts[i] || 0 };
+        return { wrapper, flipper, tilt: tilts[i] || 0, card };
       });
 
-      // Phase 1: fly from deck to spread positions
+      // Phase 1: cards burst from deck in an arc to their spread positions
+      const flyStagger = 90;
+      const flyDur = 500;
       items.forEach(({ wrapper, flipper, tilt }, i) => {
-        const destX = baseX + i * (cW + gap);
+        const endX = baseX + i * (cW + gap);
+        const endY = destY;
+        const startX = sx - cW / 2;
+        const startY = sy - cH / 2;
+        const midX = (startX + endX) / 2;
+        const midY = Math.min(startY, endY) - 60;
+
         setTimeout(() => {
-          wrapper.style.transition = 'left 0.45s cubic-bezier(0.22,1,0.36,1), top 0.45s cubic-bezier(0.22,1,0.36,1)';
-          flipper.style.transition  = 'transform 0.45s cubic-bezier(0.22,1,0.36,1)';
-          wrapper.style.left = destX + 'px';
-          wrapper.style.top  = destY + 'px';
-          flipper.style.transform = `rotate(${tilt}deg) scale(1)`;
-        }, 30 + i * 110);
+          wrapper.animate([
+            { left: startX+'px', top: startY+'px' },
+            { left: midX+'px',   top: midY+'px',   offset: 0.45 },
+            { left: endX+'px',   top: (endY+6)+'px', offset: 0.82 },
+            { left: endX+'px',   top: endY+'px' }
+          ], { duration: flyDur, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' });
+
+          flipper.animate([
+            { transform: 'rotate(0deg) scale(0.3)' },
+            { transform: `rotate(${tilt*1.5}deg) scale(1.06)`, offset: 0.6 },
+            { transform: `rotate(${tilt}deg) scale(1.03)`, offset: 0.82 },
+            { transform: `rotate(${tilt}deg) scale(1)` }
+          ], { duration: flyDur, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' });
+        }, i * flyStagger);
       });
 
-      // Phase 2: flip each card to reveal front
-      const flyDone = 30 + 110 * (n - 1) + 460 + 120;
+      // Phase 2: dramatic flip reveal with scale pulse
+      const flipStart = n * flyStagger + flyDur + 100;
+      const flipStagger = 100;
+      const flipDur = 420;
       items.forEach(({ flipper, tilt }, i) => {
         setTimeout(() => {
-          flipper.style.transition = 'transform 0.4s ease';
-          flipper.style.transform  = `rotate(${tilt}deg) scale(1) rotateY(180deg)`;
-        }, flyDone + i * 110);
+          flipper.animate([
+            { transform: `rotate(${tilt}deg) scale(1) rotateY(0deg)` },
+            { transform: `rotate(${tilt}deg) scale(1.1) rotateY(90deg)`, offset: 0.45 },
+            { transform: `rotate(${tilt}deg) scale(1.08) rotateY(180deg)`, offset: 0.75 },
+            { transform: `rotate(${tilt}deg) scale(1) rotateY(180deg)` }
+          ], { duration: flipDur, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
+        }, flipStart + i * flipStagger);
       });
 
-      // Phase 3: shoot cards one by one into the player's hand
-      const allFlipped = flyDone + 110 * (n - 1) + 400 + 500;
+      // Phase 3: shoot cards to hand one by one with an arc
+      const shootStart = flipStart + n * flipStagger + flipDur + 380;
+      const shootStagger = 120;
+      const shootDur = 380;
+
       setTimeout(() => {
         const handEl = document.getElementById('player-hand');
         const handR  = handEl.getBoundingClientRect();
         const handCX = handR.left + handR.width / 2;
         const handCY = handR.top  + handR.height / 2;
 
-        items.forEach(({ wrapper, flipper }, i) => {
+        items.forEach(({ wrapper, flipper, card: c }, i) => {
           setTimeout(() => {
-            wrapper.style.transition = 'left 0.32s cubic-bezier(0.4,0,1,1), top 0.32s cubic-bezier(0.4,0,1,1)';
-            flipper.style.transition = 'transform 0.32s cubic-bezier(0.4,0,1,1), opacity 0.2s 0.18s';
-            wrapper.style.left = (handCX - cW / 2) + 'px';
-            wrapper.style.top  = (handCY - cH / 2) + 'px';
-            flipper.style.transform = 'rotate(0deg) scale(0.4) rotateY(180deg)';
-            flipper.style.opacity   = '0';
-            // Add this card to the hand as it arrives
+            const wR = wrapper.getBoundingClientRect();
+            const curX = wR.left, curY = wR.top;
+            const tgtX = handCX - cW / 2, tgtY = handCY - cH / 2;
+            const arcMidX = (curX + tgtX) / 2;
+            const arcMidY = Math.min(curY, tgtY) - 30;
+
+            wrapper.animate([
+              { left: curX+'px', top: curY+'px', opacity: 1 },
+              { left: arcMidX+'px', top: arcMidY+'px', opacity: 1, offset: 0.4 },
+              { left: tgtX+'px', top: tgtY+'px', opacity: 0.3 }
+            ], { duration: shootDur, easing: 'cubic-bezier(0.5, 0, 1, 0.8)', fill: 'forwards' });
+
+            flipper.animate([
+              { transform: 'rotate(0deg) scale(1) rotateY(180deg)' },
+              { transform: 'rotate(0deg) scale(0.5) rotateY(180deg)' }
+            ], { duration: shootDur, easing: 'cubic-bezier(0.5, 0, 1, 0.8)', fill: 'forwards' });
+
             setTimeout(() => {
               G.playerHand.push(drawnCards[i]);
               renderPlayerHand();
               const handCards = document.querySelectorAll('#player-hand .card');
               const newEl = handCards[handCards.length - 1];
               if (newEl) { newEl.style.animationDelay = '0ms'; newEl.classList.add('dealing'); }
-            }, 260);
-          }, i * 130);
+            }, shootDur - 60);
+          }, i * shootStagger);
         });
 
-        const lastLand = 130 * (n - 1) + 420;
+        const lastLand = n * shootStagger + shootDur + 80;
         setTimeout(() => {
-          bg.style.transition = 'opacity 0.2s';
-          bg.style.opacity = '0';
-          setTimeout(() => { ov.remove(); done(); }, 220);
+          bg.animate([{opacity:1},{opacity:0}],{duration:250,easing:'ease-in',fill:'forwards'});
+          setTimeout(() => { ov.remove(); done(); }, 260);
         }, lastLand);
-      }, allFlipped);
+      }, shootStart);
     }
 
     // ── Apply card effect ──────────────────────────────────────────────────────
@@ -1664,7 +1749,6 @@
         case 'ultra_meat':
           if(isP)G.playerHP=Math.min(3,G.playerHP+2);else G.aiHP=Math.min(3,G.aiHP+2);
           addLog(`${sN}: Ultra Meat — +2 HP`);
-          showHealEffect(isP);
           break;
         case 'knife':
           if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
@@ -1695,13 +1779,9 @@
           addLog(`${sN}: Arthur Shot — shields wiped, ${dmg} DMG`);}
           break;
         case 'doug':{
-          const c=opts?.choice||'hot';
-          if(c==='hot_opp'){
-            oFX.hot+=2;addLog(`${sN}: Doug — HoT x2 on ${oN}`);
-            showHealEffect(false); // AI healing, no effect
-          } else if(c==='hot'){
-            sFX.hot+=2;addLog(`${sN}: Doug — HoT x2`);
-            showHealEffect(isP); // Player healing, show effect
+          const c=opts?.choice||'dmg';
+          if(c==='dmg1'){
+            if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}dealDmg(isP,1);addLog(`${sN}: Doug — 1 DMG`);
           } else{
             if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}dealDmg(isP,2);addLog(`${sN}: Doug — 2 DMG`);
           }
@@ -1736,7 +1816,6 @@
           const c=opts?.choice||'self';
           if(c==='opp'){if(isP)G.aiHP=Math.min(3,G.aiHP+1);else G.playerHP=Math.min(3,G.playerHP+1);addLog(`${sN}: ${card.name} — healed ${oN} +1`);}
           else{if(isP)G.playerHP=Math.min(3,G.playerHP+1);else G.aiHP=Math.min(3,G.aiHP+1);addLog(`${sN}: ${card.name} — healed self +1`);}
-          showHealEffect(isP);
           break;}
         case 'sonic_shoes':
           sFX.dodgeCharges+=sFX.buffed==='dodge'?Infinity:3; addLog(`${sN}: Sonic Shoes — dodge 3`); pushDefZone(isP,card); break;
@@ -1821,14 +1900,6 @@
       setTimeout(() => el.classList.remove('active'), 1500);
     }
 
-    function showHealEffect(isPlayerHeal = true) {
-      // Only show heal effect for player healing, not AI healing
-      if (!isPlayerHeal) return;
-      
-      const el = document.getElementById('heal-flash');
-      el.classList.add('active');
-      setTimeout(() => el.classList.remove('active'), 800);
-    }
 
     function showCardInfo(card) {
       const panel = document.getElementById('card-info-panel');
@@ -1877,7 +1948,6 @@
     // ── Turn management ────────────────────────────────────────────────────────
     function endPlayerTurn() {
       console.log('Ending player turn, phase:', G.phase);
-      if(G.playerFX.hot>0){G.playerFX.hot--;G.playerHP=Math.min(3,G.playerHP+1);addLog(`You: HoT +1 HP`);showHealEffect(true);}
       if(G.aiFX.stun>0){G.aiFX.stun--;addLog(`AI stunned — skips turn`);endAiTurn();return;}
       if(G.aiFX.missedTurns>0){G.aiFX.missedTurns--;addLog(`AI misses a turn`);endAiTurn();return;}
       
@@ -1892,7 +1962,6 @@
 
     function endAiTurn() {
       console.log('Ending AI turn, phase:', G.phase);
-      if(G.aiFX.hot>0){G.aiFX.hot--;G.aiHP=Math.min(3,G.aiHP+1);addLog(`AI: HoT +1 HP`);showHealEffect(false);}
       if(G.playerFX.stun>0){
         G.playerFX.stun--;
         addLog(`You are stunned — turn skipped`);
@@ -1962,7 +2031,7 @@
     function aiOpts(card) {
       if(card.id==='snap_knee')  return{choice:G.playerHP<=2?'dmg':'stun'};
       if(card.id==='power_mush') return{choice:G.playerHP<=2?'fire':'ice'};
-      if(card.id==='doug')       return{choice:G.aiHP<=3?'hot':'dmg'};
+      if(card.id==='doug')       return{choice:G.playerHP<=1?'dmg1':'dmg'};
       if(card.id==='black_circle')return{choice:G.aiFX.shieldCharges>0?'shield':'dodge'};
       if(card.id==='meat'||card.id==='soul') return{choice:'self'};
       return null;
@@ -2145,6 +2214,6 @@
     updateStartingCardsFill();
 
   </script>
-  <div class="version-text">1.8.2-beta</div>
+  <div class="version-text">1.8.3</div>
 </body>
 </html>
