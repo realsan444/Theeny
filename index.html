@@ -3,186 +3,2311 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Moved</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Courier+Prime&display=swap" rel="stylesheet" />
-
+  <title>CROSSOVERS</title>
+  <link rel="icon" type="image/png" href="cardimages/Snap Your Knees.png" />
   <style>
     *, *::before, *::after {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --ink:   #0f0e0c;
-      --paper: #f2ede4;
-      --rust:  #b84a2e;
-      --fade:  #b0a99a;
     }
 
     html, body {
       width: 100%;
       height: 100%;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      background: #000;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #fff;
     }
 
-    body {
-      background-color: var(--paper);
-      color: var(--ink);
-      font-family: 'Cormorant Garamond', Georgia, serif;
+    /* ── SCREENS ── */
+    .screen {
+      position: absolute;
+      inset: 0;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
     }
 
-    /* grain overlay */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+    .screen.hidden {
+      opacity: 0;
+      visibility: hidden;
       pointer-events: none;
-      z-index: 10;
-      opacity: 0.55;
     }
 
-    /* faint rule lines */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: repeating-linear-gradient(
-        to bottom,
-        transparent,
-        transparent 39px,
-        rgba(15,14,12,0.045) 39px,
-        rgba(15,14,12,0.045) 40px
-      );
-      pointer-events: none;
-      z-index: 9;
+    /* ── GATE SCREEN ── */
+    #gate-screen {
+      gap: 36px;
+      z-index: 999;
+      background: #000;
     }
 
-    .card {
+    .gate-content {
       position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
-      text-align: center;
-      padding: 4rem 3.5rem 3.5rem;
-      max-width: 600px;
-      width: 90vw;
-
-      /* aged paper border */
-      border: 1.5px solid rgba(15,14,12,0.18);
-      outline: 6px solid transparent;
-      outline-offset: -14px;
-      box-shadow:
-        0 0 0 1px rgba(15,14,12,0.06),
-        8px 12px 40px rgba(15,14,12,0.12),
-        inset 0 0 60px rgba(15,14,12,0.03);
-
-      animation: reveal 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+      gap: 32px;
     }
 
-    /* corner ornaments */
-    .card::before,
-    .card::after {
-      content: '✦';
-      position: absolute;
-      font-size: 0.6rem;
-      color: var(--rust);
-      opacity: 0.7;
+    .gate-content > * {
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards;
     }
-    .card::before { top: 10px; left: 14px; }
-    .card::after  { bottom: 10px; right: 14px; }
 
-    .notice-tag {
-      font-family: 'Courier Prime', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.28em;
+    .gate-content > *:nth-child(1) { animation-delay: 0.1s; }
+    .gate-content > *:nth-child(2) { animation-delay: 0.3s; }
+    .gate-content > *:nth-child(3) { animation-delay: 0.5s; }
+
+    .gate-title {
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
       text-transform: uppercase;
-      color: var(--rust);
-      margin-bottom: 2.2rem;
-      opacity: 0;
-      animation: fadeUp 0.9s 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      color: #333;
+      text-align: center;
+      line-height: 2;
     }
 
-    .divider {
-      width: 40px;
-      height: 1px;
-      background: var(--rust);
-      margin: 0 auto 2.2rem;
-      opacity: 0;
-      animation: fadeUp 0.9s 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    .gate-input-row {
+      display: flex;
+      gap: 0;
+      width: 320px;
     }
 
-    h1 {
-      font-weight: 300;
-      font-size: clamp(2.6rem, 7vw, 4.2rem);
-      line-height: 1.1;
-      letter-spacing: -0.01em;
-      color: var(--ink);
-      opacity: 0;
-      animation: fadeUp 1s 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    .gate-input {
+      flex: 1;
+      padding: 13px 18px;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      color: #fff;
+      background: #0a0a0a;
+      border: 1px solid #1e1e1e;
+      border-right: none;
+      border-radius: 4px 0 0 4px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.18s;
     }
 
-    h1 em {
-      font-style: italic;
-      color: var(--rust);
+    .gate-input::placeholder { color: #2a2a2a; }
+    .gate-input:focus { border-color: #333; }
+
+    .gate-input.error {
+      border-color: #5a0000;
+      animation: gateShake 0.35s ease;
     }
 
-    .sub {
-      margin-top: 1.6rem;
-      font-size: 1.05rem;
-      font-weight: 300;
-      color: var(--fade);
-      letter-spacing: 0.02em;
-      line-height: 1.6;
-      opacity: 0;
-      animation: fadeUp 1s 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    @keyframes gateShake {
+      0%,100% { transform: translateX(0); }
+      20%     { transform: translateX(-6px); }
+      40%     { transform: translateX(6px); }
+      60%     { transform: translateX(-4px); }
+      80%     { transform: translateX(4px); }
     }
 
-    .divider-bottom {
-      width: 24px;
-      height: 1px;
-      background: var(--fade);
-      margin: 2rem auto 0;
-      opacity: 0;
-      animation: fadeUp 0.9s 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    .gate-submit {
+      padding: 13px 22px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #fff;
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      outline: none;
+      white-space: nowrap;
     }
 
-    .year {
-      font-family: 'Courier Prime', monospace;
+    .gate-submit:hover { background: #1a1a1a; border-color: #333; }
+
+    .gate-error-msg {
       font-size: 0.6rem;
       letter-spacing: 0.2em;
-      color: var(--fade);
-      margin-top: 0.9rem;
+      text-transform: uppercase;
+      color: #5a0000;
       opacity: 0;
-      animation: fadeUp 0.9s 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      transition: opacity 0.2s;
+      height: 12px;
     }
 
-    @keyframes reveal {
-      from { opacity: 0; transform: translateY(18px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .gate-error-msg.visible { opacity: 1; }
+
+    /* ════════════════════════════════════════════
+       MAIN MENU
+    ════════════════════════════════════════════ */
+    #menu-screen {
+      gap: 40px;
+      background: #000;
     }
+
+    /* Floating background cards */
+    .bg-cards {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .bg-card {
+      position: absolute;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.025);
+      animation: floatCard linear infinite;
+    }
+
+    @keyframes floatCard {
+      0%   { transform: translateY(110vh) rotate(var(--rot-start)); opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 1; }
+      100% { transform: translateY(-30vh) rotate(var(--rot-end));   opacity: 0; }
+    }
+
+    /* Radial glow behind the title */
+    .menu-glow {
+      position: absolute;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(230,57,70,0.13) 0%, transparent 70%);
+      pointer-events: none;
+      animation: pulseGlow 4s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1);    opacity: 0.7; }
+      50%       { transform: scale(1.18); opacity: 1;   }
+    }
+
+    /* Menu content staggered fade-in */
+    .menu-content {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .menu-content > * {
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards;
+    }
+
+    .menu-content > *:nth-child(1) { animation-delay: 0.1s; }
+    .menu-content > *:nth-child(2) { animation-delay: 0.35s; }
+    .menu-content > *:nth-child(3) { animation-delay: 0.6s; }
 
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .game-title {
+      font-size: clamp(3.2rem, 9vw, 6.5rem);
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .game-title span {
+      color: #e63946;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: #3a3a3a;
+      margin-top: -28px;
+    }
+
+    .btn-primary {
+      padding: 15px 60px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #fff;
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      outline: none;
+    }
+
+    .btn-primary:hover {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+    }
+
+    .btn-primary:active {
+      background: #ddd;
+      border-color: #ddd;
+      color: #000;
+    }
+
+    /* ════════════════════════════════════════════
+       GAME VIEW
+    ════════════════════════════════════════════ */
+    #game-screen {
+      justify-content: space-between;
+      padding: 4px 10px 6px;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 40%, #111 0%, #080808 70%, #000 100%);
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .top-bar .game-label {
+      font-size: 0.62rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.18);
+    }
+
+    /* HP side bars */
+    .side-hp {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 5px; flex-shrink: 0; padding: 0 4px;
+    }
+    .hp-hearts { display: flex; flex-direction: column; gap: 7px; perspective: 500px; }
+
+    .hp-slot {
+      width: 46px; height: 46px; border-radius: 50%;
+      position: relative; flex-shrink: 0;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.4,0,0.2,1);
+    }
+    .hp-slot.empty { transform: rotateY(180deg); }
+    .hp-slot-face, .hp-slot-back {
+      position: absolute; inset: 0; border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.18);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .hp-slot-back { transform: rotateY(180deg); border-color: rgba(255,255,255,0.06); filter: grayscale(0.4); }
+    .hp-slot-face img, .hp-slot-back img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+
+    /* Turn indicator — lives in top bar */
+    .turn-row {
+      flex: 1; text-align: center;
+      font-size: 0.48rem; font-weight: 800; letter-spacing: 0.25em; text-transform: uppercase;
+      color: #222; transition: color 0.4s;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .turn-row.player-turn { color: rgba(255,255,255,0.5); }
+    .turn-row.ai-turn     { color: rgba(230,57,70,0.6); }
+
+    /* AI hand */
+    .ai-hand-wrap {
+      position: relative;
+    }
+    .ai-hand-row {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      width: max-content;
+      flex-shrink: 0;
+    }
+    .card-back {
+      width: 40px; height: 56px; border-radius: 6px;
+      background: linear-gradient(135deg, #111 0%, #0a0a0a 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      position: relative; flex-shrink: 0;
+    }
+    .card-back::after {
+      content: ''; position: absolute; inset: 5px; border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: repeating-linear-gradient(45deg,rgba(255,255,255,0.02),rgba(255,255,255,0.02) 2px,transparent 2px,transparent 7px);
+    }
+
+    .btn-small {
+      padding: 8px 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #666;
+      background: transparent;
+      border: 1px solid #222;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      outline: none;
+    }
+
+    .btn-small:hover {
+      color: #fff;
+      border-color: #fff;
+    }
+
+    /* Play field */
+    .play-field {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 60px;
+      flex-shrink: 0;
+    }
+
+    .pile {
+      width: 52px; height: 72px; border-radius: 7px;
+      border: 1.5px solid #252525;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #444; position: relative; cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .pile:hover { border-color: rgba(255,255,255,0.3); }
+    .pile.deck-pile { background: linear-gradient(160deg,#111,#080808); }
+    .pile.deck-pile::before {
+      content: ''; position: absolute; inset: 4px;
+      border-radius: 5px; border: 1px solid #1e1e1e;
+    }
+    .pile.discard-pile { background: #0a0a0a; }
+    .pile.discard-pile.has-card { background: rgba(255,255,255,0.92); border-color: rgba(255,255,255,0.5); }
+    .pile.discard-pile.has-card.blank { background: #0a0a0a; border-color: #252525; }
+    .pile-label {
+      position: absolute; bottom: -18px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.5rem; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #2a2a2a; white-space: nowrap;
+    }
+
+    .turn-status-panel {
+      position: fixed; right: 8px; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; align-items: flex-end;
+      gap: 6px; z-index: 25; pointer-events: none;
+    }
+    .turn-status-line {
+      min-width: 183px; padding: 7.5px 12px;
+      border-radius: 9px; border: 1.5px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.46);
+      font-size: 0.51rem; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; text-align: right;
+      color: rgba(255,255,255,0.52);
+    }
+    .turn-status-line.ai { color: rgba(230,57,70,0.72); }
+    .turn-status-line.player { color: rgba(255,255,255,0.68); }
+
+    /* Version text */
+    .version-text {
+      position: fixed; bottom: 8px; right: 12px;
+      font-size: 0.64rem; font-weight: 400;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      pointer-events: none; z-index: 10;
+    }
+
+    /* Effects row hidden */
+    .effects-row { display: none; }
+
+    /* ── PLAYER HAND ── */
+    .hand-wrapper {
+      width: 100%; display: flex; align-items: flex-end;
+      gap: 10px; flex-shrink: 0; overflow: hidden;
+      padding: 0 4px;
+    }
+    .hand-area {
+      flex: 1; display: flex; align-items: flex-end;
+      justify-content: center; gap: 8px;
+      overflow: visible;
+    }
+
+    .card {
+      width: 110px; height: 154px; min-width: 70px; border-radius: 11px;
+      cursor: pointer; position: relative;
+      transition: transform 0.18s ease;
+      flex-shrink: 1;
+      perspective: 800px;
+    }
+    .card.collapsing {
+      width: 0 !important; min-width: 0 !important; height: 0 !important;
+      opacity: 0; margin: 0 -4px !important; padding: 0 !important;
+      overflow: hidden; pointer-events: none;
+      transition: width 0.35s cubic-bezier(0.22,1,0.36,1), min-width 0.35s cubic-bezier(0.22,1,0.36,1), height 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.12s ease, margin 0.35s cubic-bezier(0.22,1,0.36,1);
+    }
+    .card-inner {
+      position: absolute; inset: 0; border-radius: 9px;
+      transform-style: preserve-3d;
+      transition: transform 0.45s cubic-bezier(0.22,1,0.36,1);
+    }
+    .card-front {
+      position: absolute; inset: 0; border-radius: 11px;
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.7);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      overflow: hidden;
+    }
+    .card-front::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 10px 10px 0 0;
+    }
+    .card-back-info {
+      position: absolute; inset: 0; border-radius: 11px;
+      background: #0a0a0a;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      transform: rotateY(180deg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: space-between;
+      padding: 10px 8px 10px; overflow: hidden;
+    }
+    .cb-name {
+      font-size: 0.66rem; font-weight: 900; letter-spacing: 0.06em;
+      text-transform: uppercase; color: #fff; text-align: center;
+      line-height: 1.2; flex-shrink: 0;
+    }
+    .cb-desc {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 500; line-height: 1.45;
+      color: rgba(255,255,255,0.82); text-align: center;
+      padding: 6px 4px;
+    }
+    .cb-type {
+      display: inline-block; padding: 4px 10px; border-radius: 4px;
+      font-size: 0.4rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; flex-shrink: 0;
+    }
+    .cb-type.damage    { background: rgba(230,57,70,0.85);  color: #fff; }
+    .cb-type.instakill { background: rgba(130,0,0,0.95);    color: #fff; }
+    .cb-type.heal      { background: rgba(50,190,80,0.85);  color: #000; }
+    .cb-type.defense   { background: rgba(30,100,220,0.85); color: #fff; }
+    .cb-type.special   { background: rgba(220,160,0,0.85);  color: #000; }
+    .cb-type.utility   { background: rgba(90,90,90,0.85);   color: #fff; }
+    .card:hover { transform: translateY(-18px); }
+    .card:hover .card-inner { transform: rotateY(180deg); }
+
+    @keyframes dealIn {
+      from { opacity: 0; transform: translateY(40px) scale(0.88); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes playOut {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to   { opacity: 0; transform: translateY(-44px) scale(0.82); }
+    }
+    .card.playing { animation: playOut 0.22s ease forwards; pointer-events: none; }
+    .card.dealing  { animation: dealIn 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+
+    .card.selected { transform: translateY(-22px) !important; }
+    .card.selected .card-inner { transform: none !important; }
+    .card.selected .card-front { border-color: rgba(255,255,255,1); box-shadow: 0 0 0 2px #fff; }
+    .card:active { transform: translateY(-10px); }
+
+    /* Defensive: Ensure cards are always clickable */
+    #player-hand .card {
+      pointer-events: auto !important;
+      z-index: 10 !important;
+    }
+
+    /* Card text content */
+    .card-title {
+      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.03em;
+      text-transform: uppercase; color: rgba(0,0,0,0.82);
+      padding: 7px 5px; line-height: 1.3; text-align: center;
+      position: relative; z-index: 1;
+    }
+    .card.has-image .card-title {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.6);
+      color: rgba(255,255,255,0.95);
+      font-size: 0.5rem; padding: 4px 4px;
+      border-radius: 0 0 8px 8px;
+      text-shadow: none; z-index: 2;
+    }
+    .card-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; border-radius: 9px;
+      z-index: 0;
+    }
+
+    /* Card info panel (legacy — hidden, info is now on card back) */
+    .card-info-panel { display: none !important; }
+    .card-info-panel-hidden {
+      position: absolute; bottom: 100%; left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      background: rgba(0,0,0,0.9);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      min-width: 280px;
+      max-width: 320px;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+    }
+    .card-info-panel.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(-100%);
+    }
+    .card-info-title {
+      font-size: 0.52rem; font-weight: 800; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #fff;
+      margin-bottom: 6px;
+      text-align: center;
+      word-wrap: break-word;
+    }
+    .card-info-desc {
+      font-size: 0.42rem; font-weight: 400; line-height: 1.3;
+      color: rgba(255,255,255,0.8);
+      text-align: center;
+      word-wrap: break-word;
+    }
+    .card-info-type {
+      display: inline-block; padding: 3px 8px;
+      border-radius: 4px; font-size: 0.32rem;
+      font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; margin-top: 6px;
+      word-wrap: break-word;
+    }
+    .card-info-type.damage { background: rgba(255,0,0,0.7); color: #fff; }
+    .card-info-type.heal { background: rgba(0,255,100,0.7); color: #000; }
+    .card-info-type.defense { background: rgba(0,100,255,0.7); color: #fff; }
+    .card-info-type.special { background: rgba(255,200,0,0.7); color: #000; }
+    .card-info-type.instakill { background: rgba(150,0,0,0.7); color: #fff; }
+    .card-info-type.utility { background: rgba(100,100,100,0.7); color: #000; }
+
+    /* Defense zone */
+    .defense-label {
+      font-size: 0.48rem; font-weight: 700; letter-spacing: 0.45em;
+      text-transform: uppercase; color: rgba(255,255,255,0.15);
+      text-align: center; flex-shrink: 0;
+      line-height: 1;
+    }
+    .defense-zone {
+      width: 100%; display: flex; align-items: center;
+      justify-content: center; gap: 4px; flex-shrink: 0;
+    }
+    .defense-zone.ai-zone .defense-slot { width: 44px; height: 62px; border-radius: 6px; }
+    .defense-slot {
+      width: 60px; height: 84px; border-radius: 8px;
+      border: 1.5px dashed #2a2a2a;
+      background: rgba(255,255,255,0.02);
+      position: relative; flex-shrink: 0;
+      transition: border-color 0.18s, background 0.18s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .defense-slot.filled {
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.85);
+    }
+    .defense-zone.targeting .defense-slot:not(.filled) {
+      border-color: rgba(255,255,255,0.25); cursor: pointer;
+    }
+    .defense-zone.targeting .defense-slot:not(.filled):hover {
+      border-color: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.07);
+    }
+
+    /* Shake + flash */
+    @keyframes shakeScreen {
+      0%,100% { transform: translateX(0); }
+      15% { transform: translateX(-9px); }
+      30% { transform: translateX(9px); }
+      45% { transform: translateX(-6px); }
+      60% { transform: translateX(6px); }
+      75% { transform: translateX(-3px); }
+      90% { transform: translateX(3px); }
+    }
+    #game-screen.shaking { animation: shakeScreen 0.5s ease; }
+
+    .red-flash {
+      position: absolute; inset: 0; background: rgba(210,0,0,0.22);
+      pointer-events: none; z-index: 50; opacity: 0; transition: opacity 0.08s;
+    }
+    .red-flash.active { opacity: 1; }
+
+    .heal-flash {
+      position: absolute; inset: 0; background: rgba(0,255,100,0.25);
+      pointer-events: none; z-index: 50; opacity: 0; transition: opacity 0.15s;
+    }
+    .heal-flash.active { opacity: 1; }
+
+    .dumb-ah {
+      position: absolute; inset: 0; display: flex;
+      align-items: center; justify-content: center;
+      pointer-events: none; z-index: 60; opacity: 0; transition: opacity 0.06s;
+    }
+    .dumb-ah.active { opacity: 1; }
+    /* Action notification */
+    .action-notif {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none; z-index: 70;
+      opacity: 0; transition: opacity 0.12s ease;
+    }
+    .action-notif.active { opacity: 1; }
+    .action-notif-text {
+      font-size: clamp(1.8rem,7vw,3.2rem); font-weight: 900;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: #fff; text-align: center; line-height: 1.25; white-space: pre-line;
+      background: rgba(0,0,0,0.55); border-radius: 12px;
+      padding: 18px 32px;
+    }
+
+    .dumb-ah-text {
+      font-size: clamp(3rem,10vw,5.5rem); font-weight: 900;
+      letter-spacing: 0.08em; text-transform: uppercase; color: #fff;
+    }
+
+    /* Game overlays */
+    .game-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.82);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 150; backdrop-filter: blur(3px); gap: 14px;
+      opacity: 0; transform: scale(0.94) translateY(16px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .game-overlay.hidden { opacity: 0; transform: scale(0.94) translateY(16px); pointer-events: none; }
+    .game-overlay.active { opacity: 1; transform: scale(1) translateY(0); }
+    .overlay-title {
+      font-size: 0.62rem; letter-spacing: 0.35em; text-transform: uppercase; color: #444;
+    }
+    .overlay-btn {
+      padding: 10px 28px; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase; color: #fff;
+      background: #111; border: 1px solid #2a2a2a; border-radius: 5px;
+      cursor: pointer; transition: background 0.15s, border-color 0.15s; outline: none;
+      min-width: 140px; text-align: center;
+    }
+    .overlay-btn:hover { background: #1c1c1c; border-color: #555; }
+    .overlay-btn.red { border-color: #5a1010; color: #ff6b6b; }
+    .overlay-btn.red:hover { background: #1a0808; border-color: #aa2020; }
+    .overlay-btn.blue { border-color: #1a3a60; color: #7ab8f5; }
+    .overlay-btn.blue:hover { background: #0a1a30; border-color: #4a80c0; }
+    .overlay-btn.green { border-color: #1a4030; color: #6ee09a; }
+    .overlay-btn.green:hover { background: #0a2018; border-color: #3a8060; }
+    .overlay-btn.gold { border-color: #4a3800; color: #ffd166; }
+    .overlay-btn.gold:hover { background: #1a1200; border-color: #8a6000; }
+
+    .gameover-title {
+      font-size: clamp(2rem,6vw,3.5rem); font-weight: 900;
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .gameover-title.win  { color: #6ee09a; }
+    .gameover-title.lose { color: #ff6b6b; }
+
+    .game-log, .status-bar { display: none; }
+
+    /* ── SETTINGS MODAL ── */
+    @keyframes modalFadeIn  { from { opacity:0; transform:scale(0.94) translateY(16px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    @keyframes modalFadeOut { from { opacity:1; transform:scale(1) translateY(0); } to { opacity:0; transform:scale(0.94) translateY(16px); } }
+    @keyframes backdropIn  { from { opacity:0; } to { opacity:1; } }
+    @keyframes backdropOut { from { opacity:1; } to { opacity:0; } }
+
+
+    .settings-btn {
+      position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.5); padding: 9px 24px;
+      border-radius: 30px;
+      font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+      font-family: inherit; cursor: pointer; z-index: 50;
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .settings-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.5); color: #fff; }
+
+    .gear-icon { font-size: 0.85rem; display: inline-block; }
+
+    .settings-backdrop {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .settings-backdrop.entering { animation: backdropIn  0.22s ease forwards; }
+    .settings-backdrop.leaving  { animation: backdropOut 0.18s ease forwards; pointer-events:none; }
+    .settings-backdrop.hidden   { display: none; }
+
+    .settings-modal {
+      background: #0e0e0e;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 32px 36px 28px;
+      min-width: 340px; max-width: 90vw;
+      display: flex; flex-direction: column; gap: 28px;
+    }
+    .settings-backdrop.entering .settings-modal { animation: modalFadeIn  0.22s cubic-bezier(0.22,1,0.36,1) forwards; }
+    .settings-backdrop.leaving  .settings-modal { animation: modalFadeOut 0.18s ease forwards; }
+
+    .settings-header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .settings-header-title {
+      font-size: 0.7rem; font-weight: 900; letter-spacing: 0.3em;
+      text-transform: uppercase; color: rgba(255,255,255,0.55);
+    }
+    .settings-close {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6); font-size: 1rem; line-height: 1;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .settings-close:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+    .settings-divider { height: 1px; background: rgba(255,255,255,0.07); }
+
+    .setting-row { display: flex; flex-direction: column; gap: 14px; }
+    .setting-label {
+      font-size: 0.56rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.6);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .setting-val {
+      font-size: 0.64rem; font-weight: 900;
+      color: #fff; background: rgba(255,255,255,0.1);
+      padding: 2px 12px; border-radius: 20px; min-width: 36px; text-align: center;
+    }
+    .setting-slider {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 3px; border-radius: 3px;
+      outline: none; border: none; cursor: pointer;
+      background: linear-gradient(to right, #fff 50%, rgba(255,255,255,0.15) 50%);
+      transition: background 0.3s ease;
+    }
+    .setting-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px;
+      border-radius: 50%; background: #fff;
+      cursor: pointer; transition: transform 0.12s;
+    }
+    .setting-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+    .setting-slider::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; border: none;
+      cursor: pointer;
+    }
+    .toggle-btn {
+      width: 48px; height: 24px; border-radius: 12px;
+      background: #fff; border: 1px solid rgba(255,255,255,0.3);
+      cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease;
+      font-size: 0.5rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #000;
+      outline: none;
+    }
+    .toggle-btn:hover {
+      border-color: rgba(255,255,255,0.6);
+    }
+    .toggle-btn.off {
+      background: #1e1e1e; border-color: rgba(255,255,255,0.2); color: #666;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <span class="notice-tag">Notice</span>
-    <div class="divider"></div>
-    <h1>Moved to a<br><em>new domain</em></h1>
-    <p class="sub">This address is no longer in service.<br>Please update your records accordingly.</p>
-    <div class="divider-bottom"></div>
-    <p class="year">— &thinsp;Cloudflare &thinsp;—</p>
+
+  <!-- ════════════════ GATE SCREEN ════════════════ -->
+  <div id="gate-screen" class="screen">
+    <div class="gate-content">
+      <p class="gate-title">yo this site is in beta rn<br>drop the code below to get in</p>
+      <div class="gate-input-row">
+        <input class="gate-input" id="gate-input" type="password" placeholder="type the code..." autocomplete="off" />
+        <button class="gate-submit" id="gate-submit">go</button>
+      </div>
+    </div>
   </div>
+
+  <!-- ════════════════ MAIN MENU ════════════════ -->
+  <div id="menu-screen" class="screen hidden">
+    <div class="bg-cards" id="bg-cards"></div>
+    <div class="menu-glow"></div>
+    <div class="menu-content">
+      <h1 class="game-title">Cross<span>overs</span></h1>
+      <p class="subtitle">no cards, no skill</p>
+      <button class="btn-primary" id="play-btn">let's go</button>
+    </div>
+    <button class="settings-btn" id="settings-btn"><span class="gear-icon">⚙</span> Settings</button>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="settings-backdrop hidden" id="settings-backdrop">
+    <div class="settings-modal">
+      <div class="settings-header">
+        <span class="settings-header-title">Settings</span>
+        <button class="settings-close" id="settings-close">&#x2715;</button>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>AI Think Speed</span>
+          <span class="setting-val" id="ai-speed-val">0.5s</span>
+        </div>
+        <input type="range" class="setting-slider" id="ai-speed-slider" min="0.5" max="10" step="0.5" value="0.5">
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Menu Confirmation</span>
+          <span class="setting-val" id="menu-confirm-val">ON</span>
+        </div>
+        <button class="toggle-btn" id="menu-confirm-toggle">ON</button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Starting Cards</span>
+          <span class="setting-val" id="starting-cards-val">5</span>
+        </div>
+        <input type="range" class="setting-slider" id="starting-cards-slider" min="3" max="10" step="1" value="5">
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ GAME VIEW ════════════════ -->
+  <div id="game-screen" class="screen hidden">
+
+    <!-- Top bar -->
+    <div class="top-bar">
+      <span class="game-label">Crossovers</span>
+      <div class="turn-row" id="turn-row"></div>
+      <button class="btn-small" id="menu-btn">Menu</button>
+    </div>
+
+
+    <!-- AI defense zone -->
+    <div class="defense-label">A I &nbsp; D E F E N S E</div>
+    <div class="defense-zone ai-zone" id="ai-defense-zone"></div>
+
+    <!-- AI hand (face-down) + AI HP -->
+    <div class="hand-wrapper ai-hand-wrap">
+      <div class="side-hp"><div class="hp-hearts" id="ai-hearts"></div></div>
+      <div class="ai-hand-row" id="ai-hand"></div>
+    </div>
+
+    <!-- Play field: draw + discard -->
+    <div class="play-field">
+      <div class="pile deck-pile" id="deck-pile">
+        <span class="pile-label">draw</span>
+      </div>
+      <div class="pile discard-pile" id="discard-pile"></div>
+    </div>
+
+    <!-- Defense zone -->
+    <div class="defense-label">D E F E N S E</div>
+    <div class="defense-zone" id="defense-zone"></div>
+
+    <!-- Player hand + HP -->
+    <div class="hand-wrapper">
+      <div class="side-hp" style="padding-bottom:10px;"><div class="hp-hearts" id="player-hearts"></div></div>
+      <div class="hand-area" id="player-hand"></div>
+    </div>
+
+    <!-- Game log -->
+    <div class="game-log" id="game-log">
+      <div class="log-line" id="log0"></div>
+      <div class="log-line" id="log1"></div>
+      <div class="log-line" id="log2"></div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar" id="status-bar">select a card</div>
+
+    <div class="turn-status-panel" id="turn-status-panel">
+      <div class="turn-status-line ai" id="ai-turn-status">AI MISSED TURNS: 0</div>
+      <div class="turn-status-line player" id="player-turn-status">PLAYER MISSED TURNS: 0</div>
+    </div>
+
+    <!-- Overlays -->
+    <div class="red-flash" id="red-flash"></div>
+    <div class="heal-flash" id="heal-flash"></div>
+    <div class="dumb-ah" id="dumb-ah"><span class="dumb-ah-text">nuh uh</span></div>
+    <div class="action-notif" id="action-notif"><span class="action-notif-text" id="action-notif-text"></span></div>
+
+    <!-- Card info panel -->
+    <div class="card-info-panel" id="card-info-panel">
+      <div class="card-info-title" id="card-info-title"></div>
+      <div class="card-info-desc" id="card-info-desc"></div>
+      <div class="card-info-type" id="card-info-type"></div>
+    </div>
+
+    <!-- Target selection overlay -->
+    <div class="game-overlay hidden" id="target-overlay">
+      <div class="overlay-title" id="target-title">who u hitting</div>
+      <button class="overlay-btn red" id="target-ai">hit the bot</button>
+      <button class="overlay-btn green" id="target-self">heal myself</button>
+    </div>
+
+    <!-- Choice overlay (for multi-choice cards) -->
+    <div class="game-overlay hidden" id="choice-overlay">
+      <div class="overlay-title" id="choice-title">pick one :D</div>
+      <div id="choice-buttons" style="display:flex;flex-direction:column;gap:10px;align-items:center;"></div>
+    </div>
+
+    <!-- Game over overlay -->
+    <div class="game-overlay hidden" id="gameover-overlay">
+      <div class="gameover-title" id="gameover-title"></div>
+      <div class="overlay-title" id="gameover-sub"></div>
+      <button class="overlay-btn" id="play-again-btn">run it back</button>
+      <button class="overlay-btn" id="menu-again-btn">main menu</button>
+    </div>
+
+    <!-- Menu confirmation overlay -->
+    <div class="game-overlay hidden" id="menu-confirm-overlay">
+      <div class="overlay-title">leave the game?</div>
+      <div class="overlay-title" style="font-size:0.5rem;color:#666;margin-top:-8px;">ur progress is gone fr</div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+        <button class="overlay-btn red" id="confirm-menu-btn">yeah leave</button>
+        <button class="overlay-btn" id="cancel-menu-btn">nah stay</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ── Card Definitions ───────────────────────────────────────────────────────
+    const CARD_DEFS = [
+      {id:'imposter',    name:'Imposter',          desc:'one shot one kill. blocked if they got one too ngl.',               type:'instakill',count:1},
+      {id:'donkey_kong', name:'Donkey Kong',        desc:'dk said game over. blocked if they clap back with one insta.',            type:'instakill',count:1},
+      {id:'hoticoco',    name:'The Hoticoco',       desc:'instant delete no diff. blocked by a counter only.',                type:'instakill',count:1},
+      {id:'big_cat',     name:'Big the Cat',        desc:'big cat said bye gay . blocked if they got a counter.',           type:'instakill',count:1},
+      {id:'illumina',    name:'Illumina',           desc:'anything they throw bounces back at them. insta-kills too fr.',     type:'special',  count:1},
+      {id:'yoshi_egg',   name:'Yoshi Egg',          desc:'makes someone untouchable until hit. kills their shields first.',   type:'special',  count:1},
+      {id:'pac_man',     name:'Pac Man',            desc:'eats up to 5 attacks like it\'s nothing. forced if lethal.',       type:'defense',  count:1},
+      {id:'bedrock',     name:'Bedrock',            desc:'blocks literally everything except one-shots. W defense.',          type:'defense',  count:1},
+      {id:'leviathan',   name:'Reaper Leviathan',   desc:'2 dmg and stunned 2 turns. they are so cooked rn.',                type:'special',  count:1},
+      {id:'freddy_mask', name:'Freddy Mask',        desc:'blocks 2 attacks no cap. freddy said not today.',                  type:'defense',  count:1},
+      {id:'black_circle',name:'Black Circle',       desc:'makes ur active shield infinite. insta-kills still cook u tho.',   type:'special',  count:1},
+      {id:'kirby',       name:'Kirby Hammer',       desc:'kirby said ouch. drops 2 dmg on someone fr.',                      type:'damage',   count:2},
+      {id:'crushed',     name:'Crushed by Block',   desc:'1 dmg and they sit out 2 turns. rip to them.',                     type:'damage',   count:2},
+      {id:'power_mush',  name:'Power Mushroom',     desc:'pick fire (2 dmg) or ice (skip their whole turn).',                type:'special',  count:2},
+      {id:'boulder',     name:'Boulder',            desc:'drops a boulder for 2 dmg. classic.',                               type:'damage',   count:2},
+      {id:'ultra_meat',  name:'Ultra Meat',         desc:'mega heal 2hp. eating good tonight.',                               type:'heal',     count:2},
+      {id:'knife',       name:'Knife',              desc:'poke someone for 1 dmg. simple but effective.',                    type:'damage',   count:8},
+      {id:'jump',        name:'Jump',               desc:'1 dmg to bot and clanker loses turn hahaha',        type:'damage',   count:3},
+      {id:'snap_knee',   name:'Snap Your Knee',     desc:'pick: 1 dmg to bot OR stun them for a turn.',                      type:'special',  count:3},
+      {id:'arthur',      name:'Arthur Morgan Shot', desc:'goes thru all shields. max 3 dmg. arthur never misses.',           type:'damage',   count:2},
+      {id:'doug',        name:'Doug the Bug',       desc:'pick: heal 1hp per turn x2 OR drop 2 dmg. doug said choose.',     type:'special',  count:3},
+      {id:'doug',        name:'Doug the Bug',       desc:'pick: drop 2 dmg OR quick 1 dmg. doug said choose.',     type:'special',  count:3},
+      {id:'five_cards',  name:'5 Cards',            desc:'yoink 5 extra cards from the deck no gey.',                        type:'utility',  count:3},
+      {id:'hoverboard',  name:'Hover Board',        desc:'hoverboard goes zoom. dodges 1 incoming attack.',                  type:'defense',  count:3},
+      {id:'forcefield',  name:'Forcefield',         desc:'blocks 1 attack period. no discussion.',                           type:'defense',  count:5},
+      {id:'shield',      name:'Shield',             desc:'basic shield. blocks 1 hit. better than nothing.',                 type:'defense',  count:3},
+      {id:'meat',        name:'Meat',               desc:'eat the meat. heal 1hp for u or ur homie.',                        type:'heal',     count:5},
+      {id:'soul',        name:'Soul',               desc:'soul food hits different. heal 1hp wherever needed.',              type:'heal',     count:4},
+      {id:'sonic_shoes', name:'Sonic Shoes',        desc:'sonic shoes go brr. dodge 3 attacks no sweat.',                   type:'defense',  count:2},
+      {id:'samzus',      name:'Samzus Laser',       desc:'absolutely nukes all their shields. laser goes brrrt.',            type:'special',  count:2},
+    ];
+
+    function buildDeck() {
+      const d = [];
+      CARD_DEFS.forEach(def => { for (let i=0;i<def.count;i++) d.push({...def}); });
+      // Shuffle
+      for (let i=d.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]; }
+      // Sink instakills to the front of array (drawn last since we pop from end)
+      const iks=[], rest=[];
+      d.forEach(c=>(c.type==='instakill'?iks:rest).push(c));
+      return [...iks, ...rest];
+    }
+
+    function makeFX() {
+      return { shieldCharges:0, freddyCharges:0, bedrockActive:false, pacManCharges:0,
+               dodgeCharges:0, stun:0, missedTurns:0, hot:0,
+               dodgeCharges:0, stun:0, missedTurns:0,
+               untouchable:false, illumina:false, buffed:null };
+    }
+
+    // ── Global Variables ───────────────────────────────────────────────────────
+    let aiThinkSeconds = 0.5;
+    let menuConfirmationEnabled = true;
+    let startingCardsCount = 5;
+
+    // ── Animated background cards (menu) ─────────────────────────────────────
+    function spawnBgCards() {
+      const container = document.getElementById('bg-cards');
+      const SIZES = [{w:60,h:84},{w:72,h:100},{w:50,h:70},{w:80,h:112},{w:44,h:62}];
+      for (let i=0;i<14;i++) {
+        const el = document.createElement('div');
+        el.className = 'bg-card';
+        const size = SIZES[i%SIZES.length];
+        const left = Math.random()*98, dur=14+Math.random()*18, delay=-(Math.random()*dur);
+        const rs=(Math.random()-0.5)*40, re=rs+(Math.random()-0.5)*30;
+        el.style.cssText=`width:${size.w}px;height:${size.h}px;left:${left}%;--rot-start:${rs}deg;--rot-end:${re}deg;animation-duration:${dur}s;animation-delay:${delay}s;`;
+        container.appendChild(el);
+      }
+    }
+
+    // ── Game state ─────────────────────────────────────────────────────────────
+    let G = {};
+
+    function startGame() {
+      const deck = buildDeck();
+      G = { deck, playerHand:[], aiHand:[], playerHP:3, aiHP:3,
+            playerFX:makeFX(), aiFX:makeFX(),
+            phase:'player-select', pendingPlay:null, pendingDealAnim:null, animating:false, log:[],
+            playerDefenseZone:[], aiDefenseZone:[] };
+      for (let i=0;i<startingCardsCount;i++) { G.playerHand.push(drawFromDeck()); G.aiHand.push(drawFromDeck()); }
+      renderAll();
+      renderDefenseZone();
+      updateDiscard(null);
+      setStatus('pick a card you me frend now:D');
+      setTurn('player');
+      document.querySelectorAll('#player-hand .card').forEach((el, i) => {
+        el.style.animationDelay = `${i * 90}ms`;
+        el.classList.add('dealing');
+        el.addEventListener('animationend', () => { el.style.animationDelay = ''; }, { once: true });
+      });
+    }
+
+    const MAX_HAND = 12;
+
+    function drawFromDeck() {
+      if (!G.deck.length) return {id:'empty',name:'Empty',desc:'No cards left.',type:'damage'};
+      return G.deck.pop();
+    }
+
+    // ── Rendering ──────────────────────────────────────────────────────────────
+    function renderAll() {
+      renderHearts('player-hearts', G.playerHP);
+      renderHearts('ai-hearts', G.aiHP);
+      renderAiHand(); renderPlayerHand(); renderEffects(); renderDefenseZone(); renderTurnStatusBar();
+    }
+
+    function renderHearts(id, hp) {
+      const el = document.getElementById(id);
+      const maxHP = 3;
+      if (el.querySelectorAll('.hp-slot').length !== maxHP) {
+        el.innerHTML = '';
+        for (let i = 0; i < maxHP; i++) {
+          const slot = document.createElement('div');
+          slot.className = 'hp-slot';
+          const face = document.createElement('div'); face.className = 'hp-slot-face';
+          const imgF = document.createElement('img'); imgF.src = 'images/sanji.jpg'; face.appendChild(imgF);
+          const back = document.createElement('div'); back.className = 'hp-slot-back';
+          const imgB = document.createElement('img'); imgB.src = 'images/brook.jpg'; back.appendChild(imgB);
+          slot.appendChild(face); slot.appendChild(back);
+          el.appendChild(slot);
+        }
+      }
+      el.querySelectorAll('.hp-slot').forEach((slot, i) => {
+        if (i >= hp) slot.classList.add('empty');
+        else slot.classList.remove('empty');
+      });
+    }
+
+    function renderAiHand() {
+      const el = document.getElementById('ai-hand'); el.innerHTML='';
+      G.aiHand.forEach(() => { const b=document.createElement('div'); b.className='card-back'; el.appendChild(b); });
+    }
+
+    const CARD_IMAGES = {
+      doug:        'cardimages/Doug the Bug.png',
+      freddy_mask: 'cardimages/Freddy-Mask.png',
+      hoverboard:  'cardimages/Hoverboard.png',
+      knife:       'cardimages/Knife.png',
+      meat:        'cardimages/Meat.png',
+      samzus:      'cardimages/Samzus Laser.png',
+      snap_knee:   'cardimages/Snap Your Knees.png',
+      soul:        'cardimages/Soul.png',
+      arthur:      'cardimages/Arthur Morgan Shot.png',
+      jump:        'cardimages/Jump.png',
+      five_cards:  'cardimages/5 Cards.png',
+      sonic_shoes: 'cardimages/Sonic Shoes.png',
+      forcefield:  'cardimages/Forcefield.png',
+      leviathan:   'cardimages/Swallowed.png',
+    };
+
+    function buildCardEl(card, index) {
+      const el = document.createElement('div');
+      el.className = 'card';
+
+      const inner = document.createElement('div');
+      inner.className = 'card-inner';
+
+      // Front face
+      const front = document.createElement('div');
+      front.className = 'card-front';
+      const imgSrc = CARD_IMAGES[card.id];
+      if (imgSrc) {
+        el.classList.add('has-image');
+        const img = document.createElement('img');
+        img.className = 'card-img'; img.src = imgSrc; img.alt = card.name;
+        img.onerror = function() { el.classList.remove('has-image'); img.remove(); };
+        front.appendChild(img);
+      }
+      const t = document.createElement('div'); t.className = 'card-title'; t.textContent = card.name || '';
+      front.appendChild(t);
+
+      // Back face — card info revealed on hover
+      const back = document.createElement('div');
+      back.className = 'card-back-info';
+      const nameEl = document.createElement('div'); nameEl.className = 'cb-name'; nameEl.textContent = card.name || '';
+      const descEl = document.createElement('div'); descEl.className = 'cb-desc'; descEl.textContent = card.desc || '';
+      const typeEl = document.createElement('div'); typeEl.className = `cb-type ${card.type || ''}`; typeEl.textContent = card.type || '';
+      back.appendChild(nameEl); back.appendChild(descEl); back.appendChild(typeEl);
+
+      inner.appendChild(front); inner.appendChild(back);
+      el.appendChild(inner);
+      el.addEventListener('click', e => { e.stopPropagation(); onCardClick(index); });
+      return el;
+    }
+
+    function renderPlayerHand() {
+      const c=document.getElementById('player-hand'); 
+      c.innerHTML='';
+      console.log('Rendering player hand, cards:', G.playerHand.length);
+
+      // Safety: Ensure all overlays are hidden during player turn
+      const overlays = ['menu-confirm-overlay', 'target-overlay', 'choice-overlay', 'gameover-overlay'];
+      overlays.forEach(id => {
+        const overlay = document.getElementById(id);
+        if (overlay && !overlay.classList.contains('hidden')) {
+          console.warn('Overlay was not hidden:', id);
+          overlay.classList.add('hidden');
+        }
+      });
+
+      console.log('Overlay states:', {
+        menuConfirm: document.getElementById('menu-confirm-overlay')?.classList.contains('hidden'),
+        target: document.getElementById('target-overlay')?.classList.contains('hidden'),
+        choice: document.getElementById('choice-overlay')?.classList.contains('hidden'),
+        gameover: document.getElementById('gameover-overlay')?.classList.contains('hidden')
+      });
+
+      G.playerHand.forEach((card,i)=>{
+        const cardEl = buildCardEl(card,i);
+        // Safety: Force pointer-events to ensure cards are clickable
+        cardEl.style.pointerEvents = 'auto';
+        c.appendChild(cardEl);
+      });
+    }
+
+    function renderEffects() {
+      renderFXSide('ai-effects', G.aiFX);
+      renderFXSide('player-effects', G.playerFX);
+    }
+
+    function formatMissTurns(fx) {
+      const total=(fx.stun||0)+(fx.missedTurns||0);
+      return `${total} turn${total===1?'':'s'}`;
+    }
+
+    function renderTurnStatusBar() {
+      const ai=document.getElementById('ai-turn-status');
+      const player=document.getElementById('player-turn-status');
+      if(!ai||!player)return;
+      ai.textContent=`AI MISSED TURNS: ${formatMissTurns(G.aiFX)}`;
+      player.textContent=`PLAYER MISSED TURNS: ${formatMissTurns(G.playerFX)}`;
+    }
+
+    function renderDefenseZone() {
+      renderDZone('defense-zone', G.playerDefenseZone);
+      renderDZone('ai-defense-zone', G.aiDefenseZone);
+    }
+
+    function renderDZone(id, arr) {
+      const container = document.getElementById(id);
+      if (!container) return;
+      container.innerHTML = '';
+      for (let i=0;i<6;i++) {
+        const slot = document.createElement('div');
+        const card = arr ? arr[i] : null;
+        if (card) {
+          slot.className = 'defense-slot filled';
+          const imgSrc = CARD_IMAGES[card.id];
+          let hasImage = false;
+          if (imgSrc) {
+            const img = document.createElement('img');
+            img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:9px;z-index:0;';
+            img.src = imgSrc; img.alt = card.name;
+            img.onerror = function() {
+              // Fallback: remove image and update styling
+              img.remove();
+              hasImage = false;
+              // Update name styling to text-only version
+              if (nm) {
+                nm.style.cssText = 'font-size:0.55rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:rgba(0,0,0,0.85);text-align:center;padding:6px 4px;line-height:1.3;position:relative;z-index:1;';
+              }
+            };
+            slot.appendChild(img);
+            hasImage = true;
+          }
+          const nm = document.createElement('div');
+          nm.style.cssText = hasImage
+            ? 'position:absolute;bottom:0;left:0;right:0;font-size:0.5rem;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;color:rgba(255,255,255,0.95);text-align:center;padding:5px 4px;background:rgba(0,0,0,0.6);border-radius:0 0 8px 8px;z-index:1;'
+            : 'font-size:0.55rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:rgba(0,0,0,0.85);text-align:center;padding:6px 4px;line-height:1.3;position:relative;z-index:1;';
+          nm.textContent = card.name;
+          slot.appendChild(nm);
+        } else {
+          slot.className = 'defense-slot';
+        }
+        container.appendChild(slot);
+      }
+    }
+
+    function renderFXSide(id, fx) {
+      const el=document.getElementById(id); if(!el)return; el.innerHTML='';
+      const chips=[];
+      const tot=(fx.shieldCharges||0)+(fx.freddyCharges||0)+(fx.pacManCharges||0);
+      if (fx.bedrockActive) chips.push({cls:'shield',text:fx.buffed==='bedrock'?'Bedrock ∞':'Bedrock'});
+      else if (tot>0) chips.push({cls:'shield',text:fx.buffed==='shield'?'Shield ∞':`Shield ×${tot}`});
+      if (fx.dodgeCharges>0) chips.push({cls:'dodge',text:fx.buffed==='dodge'?'Dodge ∞':`Dodge ×${fx.dodgeCharges}`});
+      if (fx.stun>0)         chips.push({cls:'stun',  text:`Stun ${fx.stun}`});
+      if (fx.missedTurns>0)  chips.push({cls:'stun',  text:`Miss ${fx.missedTurns}`});
+      if (fx.hot>0)          chips.push({cls:'hot',   text:`HoT ${fx.hot}`});
+      if (fx.untouchable)    chips.push({cls:'special',text:'Untouchable'});
+      if (fx.illumina)       chips.push({cls:'special',text:'Illumina'});
+      chips.forEach(c=>{ const chip=document.createElement('div'); chip.className=`effect-chip ${c.cls}`; chip.textContent=c.text; el.appendChild(chip); });
+    }
+
+    function setTurn(who) {
+      const el=document.getElementById('turn-row');
+      el.className='turn-row '+(who==='player'?'player-turn':'ai-turn');
+      el.textContent=who==='player'?'ur turn gay':'clanker is cookin...';
+    }
+
+    function setStatus(msg) { document.getElementById('status-bar').textContent=msg; }
+
+    function addLog(msg) {
+      G.log.unshift(msg); if(G.log.length>3)G.log.length=3;
+      ['log0','log1','log2'].forEach((id,i)=>{
+        const el=document.getElementById(id);
+        el.textContent=G.log[i]||'';
+        el.className='log-line'+(i===0?' fresh':'');
+      });
+    }
+
+    function updateDiscard(card) {
+      const el = document.getElementById('discard-pile');
+      el.innerHTML = '';
+      if (card && card.id !== 'empty') {
+        el.classList.add('has-card'); el.classList.remove('blank');
+        const imgSrc = CARD_IMAGES[card.id];
+        if (imgSrc) {
+          const img = document.createElement('img');
+          img.src = imgSrc;
+          img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:5px;';
+          el.appendChild(img);
+          const lbl = document.createElement('div');
+          lbl.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.65);color:#fff;font-size:0.36rem;font-weight:800;text-transform:uppercase;text-align:center;padding:2px;border-radius:0 0 5px 5px;font-family:inherit;';
+          lbl.textContent = card.name; el.appendChild(lbl);
+        } else {
+          el.style.background = 'rgba(255,255,255,0.92)';
+          el.innerHTML = `<span style="font-size:0.4rem;font-weight:800;color:rgba(0,0,0,0.8);text-transform:uppercase;letter-spacing:0.04em;text-align:center;padding:4px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:inherit;">${card.name}</span>`;
+        }
+      } else {
+        el.classList.remove('has-card'); el.classList.add('blank');
+        el.style.background = '';
+      }
+    }
+
+    // ── Card click (2-step: select → destination) ──────────────────────────────
+    function onCardClick(index) {
+      console.log('Card clicked:', index, 'Phase:', G.phase, 'Animating:', G.animating);
+      if (G.phase!=='player-select'||G.animating) {
+        console.log('Card click blocked - Phase:', G.phase, 'Animating:', G.animating);
+        return;
+      }
+      const els=document.querySelectorAll('#player-hand .card');
+      if (G.pendingPlay&&G.pendingPlay.handIndex===index) { deselect(); return; }
+      G.pendingPlay={card:G.playerHand[index],handIndex:index};
+      els.forEach((e,i)=>e.classList.toggle('selected',i===index));
+      const isDefCard = G.pendingPlay.card.type==='defense';
+      const dz=document.getElementById('defense-zone');
+      if(isDefCard) dz.classList.add('targeting'); else dz.classList.remove('targeting');
+      setStatus(isDefCard ? 'drop it in the defense zone' : 'yeet it in the discard pile');
+    }
+
+    function deselect() {
+      G.pendingPlay=null;
+      document.querySelectorAll('#player-hand .card').forEach(e=>{
+        e.classList.remove('selected');
+        // Safety: Remove any animation classes that might block interaction
+        e.classList.remove('playing');
+      });
+      document.getElementById('defense-zone').classList.remove('targeting');
+      setStatus('pick a card :D ');
+    }
+
+    const CHOICE_OPTS = {
+      snap_knee:   [{text:'1 DMG to AI',cls:'red',val:'dmg'},{text:'Stun AI 1 turn',cls:'gold',val:'stun'}],
+      power_mush:  [{text:'Fire — 2 DMG',cls:'red',val:'fire'},{text:'Ice — Skip AI turn',cls:'blue',val:'ice'}],
+      doug:        [{text:'Heal Self (HoT)',cls:'green',val:'hot'},{text:'Heal AI (HoT)',cls:'blue',val:'hot_opp'}],
+      doug:        [{text:'2 DMG',cls:'red',val:'dmg'},{text:'1 DMG',cls:'red',val:'dmg1'}],
+      black_circle:[{text:'Buff Shields → ∞',cls:'blue',val:'shield'},{text:'Buff Dodge → ∞',cls:'green',val:'dodge'}],
+      meat:        [{text:'Heal Self +1 HP',cls:'green',val:'self'},{text:'Heal AI +1 HP',cls:'blue',val:'opp'}],
+      soul:        [{text:'Heal Self +1 HP',cls:'green',val:'self'},{text:'Heal AI +1 HP',cls:'blue',val:'opp'}],
+      yoshi_egg:  [{text:'Make Self Untouchable',cls:'gold',val:'self'},{text:'Make AI Untouchable',cls:'blue',val:'opp'}],
+      sonic_shoes:[{text:'Dodge Self 3 attacks',cls:'green',val:'self'},{text:'Dodge AI 3 attacks',cls:'blue',val:'opp'}],
+    };
+
+    function playPending(opts) {
+      if(!G.pendingPlay)return;
+      const {card,handIndex}=G.pendingPlay;
+      if(CHOICE_OPTS[card.id]){ showChoiceOverlay(card.id); return; }
+      executePlay('player',handIndex,opts);
+    }
+
+    // ── Choice overlay ─────────────────────────────────────────────────────────
+    function showChoiceOverlay(cardId) {
+      const opts=CHOICE_OPTS[cardId];
+      const btns=document.getElementById('choice-buttons'); btns.innerHTML='';
+      opts.forEach(o=>{
+        const b=document.createElement('button');
+        b.className='overlay-btn '+o.cls;
+        b.textContent=o.text;
+        b.addEventListener('click',()=>{ hideChoiceOverlay(); executePlay('player',G.pendingPlay.handIndex,{choice:o.val}); });
+        btns.appendChild(b);
+      });
+
+      // Fix: Properly show choice overlay with transition
+      const overlay = document.getElementById('choice-overlay');
+      overlay.classList.remove('hidden');
+      setTimeout(() => overlay.classList.add('active'), 10);
+    }
+    function hideChoiceOverlay() { 
+      const overlay = document.getElementById('choice-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => overlay.classList.add('hidden'), 200);
+    }
+
+    // ── Card play animation ────────────────────────────────────────────────────
+    function animateCardPlay(srcEl, card, isPlayer) {
+      const srcR    = srcEl.getBoundingClientRect();
+      const discR   = document.getElementById('discard-pile').getBoundingClientRect();
+      const imgSrc  = CARD_IMAGES[card.id];
+      const cW = srcR.width, cH = srcR.height;
+
+      if (isPlayer) srcEl.classList.add('playing');
+
+      // Build face-up card clone (same for both player and AI)
+      // Build face-up card clone
+      const clone = document.createElement('div');
+      clone.style.cssText = `position:fixed;left:${srcR.left}px;top:${srcR.top}px;width:${cW}px;height:${cH}px;border-radius:9px;z-index:400;pointer-events:none;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.7);overflow:hidden;transform-origin:center center;`;
+      clone.style.cssText = `position:fixed;left:0;top:0;width:${cW}px;height:${cH}px;border-radius:9px;z-index:400;pointer-events:none;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.7);overflow:hidden;transform-origin:center center;will-change:transform,opacity;`;
+
+      if (imgSrc) {
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+        clone.appendChild(img);
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:#fff;font-size:0.48rem;font-weight:800;text-transform:uppercase;text-align:center;padding:3px;font-family:inherit;';
+        lbl.textContent = card.name;
+        clone.appendChild(lbl);
+      } else {
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.5rem;font-weight:800;text-transform:uppercase;color:rgba(0,0,0,0.82);text-align:center;padding:5px;font-family:inherit;';
+        lbl.textContent = card.name;
+        clone.appendChild(lbl);
+      }
+      document.body.appendChild(clone);
+
+      // Destination: defense slot or discard pile
+      let destR;
+      if (card.type === 'defense') {
+        const dzId      = isPlayer ? 'defense-zone' : 'ai-defense-zone';
+        const slotIdx   = isPlayer ? G.playerDefenseZone.length : G.aiDefenseZone.length;
+        const allSlots  = document.querySelectorAll(`#${dzId} .defense-slot`);
+        const targetSlot = allSlots[slotIdx] || allSlots[allSlots.length - 1];
+        destR = targetSlot ? targetSlot.getBoundingClientRect() : discR;
+      } else {
+        destR = discR;
+      }
+      const scale = Math.min(destR.width / cW, destR.height / cH);
+      const destX = destR.left + (destR.width  - cW * scale) / 2;
+      const destY = destR.top  + (destR.height - cH * scale) / 2;
+
+      // Fly + shrink simultaneously; on landing snap-update destination
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        clone.style.transition = 'left 0.38s cubic-bezier(0.4,0,0.2,1), top 0.38s cubic-bezier(0.4,0,0.2,1), transform 0.38s cubic-bezier(0.4,0,0.2,1)';
+        clone.style.left      = destX + 'px';
+        clone.style.top       = destY + 'px';
+        clone.style.transform = `scale(${scale})`;
+        setTimeout(() => {
+          if (card.type !== 'defense') updateDiscard(card);
+          clone.remove();
+        }, 390);
+      }));
+
+      // Compute centres
+      const srcCX = srcR.left + srcR.width / 2;
+      const srcCY = srcR.top  + srcR.height / 2;
+      const endScale = Math.min(destR.width / cW, destR.height / cH);
+      const destCX = destR.left + destR.width / 2;
+      const destCY = destR.top  + destR.height / 2;
+      const dx = destCX - srcCX;
+      const dy = destCY - srcCY;
+
+      // Arc midpoint — lift card upward in an arc
+      const arcPeak = Math.min(-40, dy * 0.35);
+      const midX = dx * 0.5;
+      const midY = dy * 0.5 + arcPeak;
+
+      // Slight tilt direction based on travel
+      const tiltDir = dx > 0 ? 1 : -1;
+
+      const totalDur = 480;
+
+      const keyframes = [
+        // 0% — start position, slight scale-up (anticipation)
+        {
+          transform: `translate(${srcCX - cW/2}px, ${srcCY - cH/2}px) scale(1) rotate(0deg)`,
+          opacity: 1,
+          offset: 0
+        },
+        // 12% — lift & pop
+        {
+          transform: `translate(${srcCX - cW/2}px, ${srcCY - cH/2 - 8}px) scale(1.08) rotate(${tiltDir * -2}deg)`,
+          opacity: 1,
+          offset: 0.12
+        },
+        // 55% — arc midpoint
+        {
+          transform: `translate(${srcCX - cW/2 + midX}px, ${srcCY - cH/2 + midY}px) scale(${0.5 + endScale * 0.5}) rotate(${tiltDir * 6}deg)`,
+          opacity: 1,
+          offset: 0.55
+        },
+        // 85% — arrive slightly past destination (overshoot)
+        {
+          transform: `translate(${destCX - cW/2 + dx * 0.02}px, ${destCY - cH/2 - 3}px) scale(${endScale * 0.95}) rotate(${tiltDir * 1}deg)`,
+          opacity: 1,
+          offset: 0.85
+        },
+        // 100% — settle
+        {
+          transform: `translate(${destCX - cW/2}px, ${destCY - cH/2}px) scale(${endScale}) rotate(0deg)`,
+          opacity: 1,
+          offset: 1
+        }
+      ];
+
+      const anim = clone.animate(keyframes, {
+        duration: totalDur,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'forwards'
+      });
+
+      anim.onfinish = () => {
+        if (card.type !== 'defense') updateDiscard(card);
+        clone.remove();
+      };
+    }
+
+    // ── Execute play ───────────────────────────────────────────────────────────
+    function executePlay(who, handIndex, opts) {
+      const isP=who==='player';
+      const hand=isP?G.playerHand:G.aiHand;
+      const sFX=isP?G.playerFX:G.aiFX, oFX=isP?G.aiFX:G.playerFX;
+      const card=hand[handIndex]; if(!card)return;
+
+      // Play card sound effect
+      const cardSound = document.getElementById('card-sound');
+      if (cardSound) {
+        cardSound.currentTime = 0; // Reset to start for rapid plays
+        cardSound.play().catch(e => console.log('Card sound play failed:', e));
+      }
+
+      if (isP) {
+        G.animating=true;
+        const cardEls=document.querySelectorAll('#player-hand .card');
+        const srcEl=cardEls[handIndex];
+        if(srcEl){srcEl.classList.remove('dealing','selected'); animateCardPlay(srcEl, card, true);}
+        if(srcEl){
+          srcEl.classList.remove('dealing','selected');
+          animateCardPlay(srcEl, card, true);
+          // Smoothly collapse the slot so siblings slide together
+          requestAnimationFrame(() => srcEl.classList.add('collapsing'));
+        }
+      } else {
+        const backEls=document.querySelectorAll('#ai-hand .card-back');
+        const srcEl=backEls[Math.min(handIndex, backEls.length-1)];
+        if(srcEl) animateCardPlay(srcEl, card, false);
+      }
+      hand.splice(handIndex,1);
+      G.pendingPlay=null;
+      setTimeout(()=>{
+        applyEffect(card, who, sFX, oFX, opts);
+        const dealCards = G.pendingDealAnim;
+        G.pendingDealAnim = null;
+        const finishTurn = () => {
+          if(isP){renderPlayerHand();G.animating=false;}else{renderAiHand();}
+          renderHearts('player-hearts',G.playerHP);
+          renderHearts('ai-hearts',G.aiHP);
+          renderEffects();
+          renderDefenseZone();
+          checkGameOver();
+          if(G.phase!=='gameover'){
+            if(isP) endPlayerTurn();
+            else    endAiTurn();
+          }
+        };
+        if(dealCards && isP) showFiveCardDeal(dealCards, finishTurn);
+        else finishTurn();
+      }, isP?280:420);
+      }, isP?500:540);
+    }
+
+    // ── 5-card cinematic deal animation ────────────────────────────────────────
+    function showFiveCardDeal(drawnCards, done) {
+      const deckEl = document.getElementById('deck-pile');
+      const deckR  = deckEl.getBoundingClientRect();
+      const sx = deckR.left + deckR.width / 2;
+      const sy = deckR.top  + deckR.height / 2;
+      const W  = window.innerWidth, H = window.innerHeight;
+
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:500;pointer-events:none;';
+      document.body.appendChild(ov);
+
+      const bg = document.createElement('div');
+      bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);opacity:0;transition:opacity 0.25s;';
+      bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.78);opacity:0;';
+      ov.appendChild(bg);
+      requestAnimationFrame(() => requestAnimationFrame(() => bg.style.opacity = '1'));
+      bg.animate([{opacity:0},{opacity:1}],{duration:300,easing:'ease-out',fill:'forwards'});
+
+      // Remove drawn cards from hand so we can add them back one by one
+      G.playerHand.splice(G.playerHand.length - drawnCards.length, drawnCards.length);
+      renderPlayerHand();
+
+      const n = drawnCards.length;
+      const cW = 74, cH = 104, gap = 14;
+      const cW = 80, cH = 112, gap = 16;
+      const totalW = n * cW + (n - 1) * gap;
+      const baseX  = W / 2 - totalW / 2;
+      const destY  = H / 2 - cH / 2;
+      const tilts  = [-14, -7, 0, 7, 14];
+      const tilts  = [-12, -6, 0, 6, 12];
+
+      const items = drawnCards.map((card, i) => {
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = `position:fixed;left:${sx-cW/2}px;top:${sy-cH/2}px;width:${cW}px;height:${cH}px;perspective:700px;`;
+        wrapper.style.cssText = `position:fixed;left:${sx-cW/2}px;top:${sy-cH/2}px;width:${cW}px;height:${cH}px;perspective:800px;will-change:transform;`;
+
+        const flipper = document.createElement('div');
+        flipper.style.cssText = 'position:absolute;inset:0;transform-style:preserve-3d;transform:rotate(0deg) scale(0.55);transition:none;';
+        flipper.style.cssText = 'position:absolute;inset:0;transform-style:preserve-3d;transform:rotate(0deg) scale(0.3);';
+
+        const back = document.createElement('div');
+        back.style.cssText = 'position:absolute;inset:0;border-radius:9px;background:linear-gradient(135deg,#111,#0a0a0a);border:1.5px solid rgba(255,255,255,0.1);backface-visibility:hidden;-webkit-backface-visibility:hidden;';
+        back.style.cssText = 'position:absolute;inset:0;border-radius:10px;background:linear-gradient(135deg,#181818,#0a0a0a);border:1.5px solid rgba(255,255,255,0.12);backface-visibility:hidden;-webkit-backface-visibility:hidden;';
+        const pat = document.createElement('div');
+        pat.style.cssText = 'position:absolute;inset:5px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);background:repeating-linear-gradient(45deg,rgba(255,255,255,0.02),rgba(255,255,255,0.02) 2px,transparent 2px,transparent 7px);';
+        pat.style.cssText = 'position:absolute;inset:5px;border-radius:7px;border:1px solid rgba(255,255,255,0.06);background:repeating-linear-gradient(45deg,rgba(255,255,255,0.02),rgba(255,255,255,0.02) 2px,transparent 2px,transparent 7px);';
+        back.appendChild(pat);
+
+        const front = document.createElement('div');
+        const imgSrc = CARD_IMAGES[card.id];
+        front.style.cssText = 'position:absolute;inset:0;border-radius:9px;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.7);backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;';
+        front.style.cssText = 'position:absolute;inset:0;border-radius:10px;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.7);backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;';
+        if (imgSrc) {
+          const img = document.createElement('img');
+          img.src = imgSrc;
+          img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:9px;';
+          img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px;';
+          front.appendChild(img);
+          const lbl = document.createElement('div');
+          lbl.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.62);color:#fff;font-size:0.48rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;text-align:center;padding:4px;border-radius:0 0 8px 8px;font-family:inherit;';
+          lbl.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.65);color:#fff;font-size:0.5rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;text-align:center;padding:5px;border-radius:0 0 9px 9px;font-family:inherit;';
+          lbl.textContent = card.name;
+          front.appendChild(lbl);
+        } else {
+          const lbl = document.createElement('div');
+          lbl.style.cssText = 'font-size:0.52rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:rgba(0,0,0,0.82);text-align:center;padding:7px 5px;font-family:inherit;';
+          lbl.style.cssText = 'font-size:0.54rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:rgba(0,0,0,0.82);text-align:center;padding:7px 5px;font-family:inherit;';
+          lbl.textContent = card.name;
+          front.appendChild(lbl);
+        }
+
+        flipper.appendChild(back);
+        flipper.appendChild(front);
+        wrapper.appendChild(flipper);
+        ov.appendChild(wrapper);
+        return { wrapper, flipper, tilt: tilts[i] || 0 };
+        return { wrapper, flipper, tilt: tilts[i] || 0, card };
+      });
+
+      // Phase 1: fly from deck to spread positions
+      // Phase 1: cards burst from deck in an arc to their spread positions
+      const flyStagger = 90;
+      const flyDur = 500;
+      items.forEach(({ wrapper, flipper, tilt }, i) => {
+        const destX = baseX + i * (cW + gap);
+        const endX = baseX + i * (cW + gap);
+        const endY = destY;
+        const startX = sx - cW / 2;
+        const startY = sy - cH / 2;
+        const midX = (startX + endX) / 2;
+        const midY = Math.min(startY, endY) - 60;
+
+        setTimeout(() => {
+          wrapper.style.transition = 'left 0.45s cubic-bezier(0.22,1,0.36,1), top 0.45s cubic-bezier(0.22,1,0.36,1)';
+          flipper.style.transition  = 'transform 0.45s cubic-bezier(0.22,1,0.36,1)';
+          wrapper.style.left = destX + 'px';
+          wrapper.style.top  = destY + 'px';
+          flipper.style.transform = `rotate(${tilt}deg) scale(1)`;
+        }, 30 + i * 110);
+          wrapper.animate([
+            { left: startX+'px', top: startY+'px' },
+            { left: midX+'px',   top: midY+'px',   offset: 0.45 },
+            { left: endX+'px',   top: (endY+6)+'px', offset: 0.82 },
+            { left: endX+'px',   top: endY+'px' }
+          ], { duration: flyDur, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' });
+
+          flipper.animate([
+            { transform: 'rotate(0deg) scale(0.3)' },
+            { transform: `rotate(${tilt*1.5}deg) scale(1.06)`, offset: 0.6 },
+            { transform: `rotate(${tilt}deg) scale(1.03)`, offset: 0.82 },
+            { transform: `rotate(${tilt}deg) scale(1)` }
+          ], { duration: flyDur, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' });
+        }, i * flyStagger);
+      });
+
+      // Phase 2: flip each card to reveal front
+      const flyDone = 30 + 110 * (n - 1) + 460 + 120;
+      // Phase 2: dramatic flip reveal with scale pulse
+      const flipStart = n * flyStagger + flyDur + 100;
+      const flipStagger = 100;
+      const flipDur = 420;
+      items.forEach(({ flipper, tilt }, i) => {
+        setTimeout(() => {
+          flipper.style.transition = 'transform 0.4s ease';
+          flipper.style.transform  = `rotate(${tilt}deg) scale(1) rotateY(180deg)`;
+        }, flyDone + i * 110);
+          flipper.animate([
+            { transform: `rotate(${tilt}deg) scale(1) rotateY(0deg)` },
+            { transform: `rotate(${tilt}deg) scale(1.1) rotateY(90deg)`, offset: 0.45 },
+            { transform: `rotate(${tilt}deg) scale(1.08) rotateY(180deg)`, offset: 0.75 },
+            { transform: `rotate(${tilt}deg) scale(1) rotateY(180deg)` }
+          ], { duration: flipDur, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
+        }, flipStart + i * flipStagger);
+      });
+
+      // Phase 3: shoot cards one by one into the player's hand
+      const allFlipped = flyDone + 110 * (n - 1) + 400 + 500;
+      // Phase 3: shoot cards to hand one by one with an arc
+      const shootStart = flipStart + n * flipStagger + flipDur + 380;
+      const shootStagger = 120;
+      const shootDur = 380;
+
+      setTimeout(() => {
+        const handEl = document.getElementById('player-hand');
+        const handR  = handEl.getBoundingClientRect();
+        const handCX = handR.left + handR.width / 2;
+        const handCY = handR.top  + handR.height / 2;
+
+        items.forEach(({ wrapper, flipper }, i) => {
+        items.forEach(({ wrapper, flipper, card: c }, i) => {
+          setTimeout(() => {
+            wrapper.style.transition = 'left 0.32s cubic-bezier(0.4,0,1,1), top 0.32s cubic-bezier(0.4,0,1,1)';
+            flipper.style.transition = 'transform 0.32s cubic-bezier(0.4,0,1,1), opacity 0.2s 0.18s';
+            wrapper.style.left = (handCX - cW / 2) + 'px';
+            wrapper.style.top  = (handCY - cH / 2) + 'px';
+            flipper.style.transform = 'rotate(0deg) scale(0.4) rotateY(180deg)';
+            flipper.style.opacity   = '0';
+            // Add this card to the hand as it arrives
+            const wR = wrapper.getBoundingClientRect();
+            const curX = wR.left, curY = wR.top;
+            const tgtX = handCX - cW / 2, tgtY = handCY - cH / 2;
+            const arcMidX = (curX + tgtX) / 2;
+            const arcMidY = Math.min(curY, tgtY) - 30;
+
+            wrapper.animate([
+              { left: curX+'px', top: curY+'px', opacity: 1 },
+              { left: arcMidX+'px', top: arcMidY+'px', opacity: 1, offset: 0.4 },
+              { left: tgtX+'px', top: tgtY+'px', opacity: 0.3 }
+            ], { duration: shootDur, easing: 'cubic-bezier(0.5, 0, 1, 0.8)', fill: 'forwards' });
+
+            flipper.animate([
+              { transform: 'rotate(0deg) scale(1) rotateY(180deg)' },
+              { transform: 'rotate(0deg) scale(0.5) rotateY(180deg)' }
+            ], { duration: shootDur, easing: 'cubic-bezier(0.5, 0, 1, 0.8)', fill: 'forwards' });
+
+            setTimeout(() => {
+              G.playerHand.push(drawnCards[i]);
+              renderPlayerHand();
+              const handCards = document.querySelectorAll('#player-hand .card');
+              const newEl = handCards[handCards.length - 1];
+              if (newEl) { newEl.style.animationDelay = '0ms'; newEl.classList.add('dealing'); }
+            }, 260);
+          }, i * 130);
+            }, shootDur - 60);
+          }, i * shootStagger);
+        });
+
+        const lastLand = 130 * (n - 1) + 420;
+        const lastLand = n * shootStagger + shootDur + 80;
+        setTimeout(() => {
+          bg.style.transition = 'opacity 0.2s';
+          bg.style.opacity = '0';
+          setTimeout(() => { ov.remove(); done(); }, 220);
+          bg.animate([{opacity:1},{opacity:0}],{duration:250,easing:'ease-in',fill:'forwards'});
+          setTimeout(() => { ov.remove(); done(); }, 260);
+        }, lastLand);
+      }, allFlipped);
+      }, shootStart);
+    }
+
+    // ── Apply card effect ──────────────────────────────────────────────────────
+    function applyEffect(card, who, sFX, oFX, opts) {
+      const isP=who==='player';
+      const sN=isP?'You':'AI', oN=isP?'AI':'You';
+      const id=card.id;
+
+      // Instakills
+      if (card.type==='instakill') {
+        if(oFX.untouchable){addLog(`${oN} is untouchable!`);return;}
+        const blocked=resolveInstakill(oFX,sFX,isP);
+        if(!blocked){if(isP)G.aiHP=0;else G.playerHP=0;addLog(`${sN}: ${card.name} — ${oN} eliminated!`);}
+        return;
+      }
+
+      switch(id) {
+        case 'illumina':    sFX.illumina=true; addLog(`${sN}: Illumina active`); break;
+        case 'yoshi_egg':
+          const yoshiTarget = opts?.choice || 'opp';
+          if (yoshiTarget === 'self') {
+            sFX.untouchable = true;
+            addLog(`${sN}: Self is untouchable (Yoshi Egg)`);
+          } else {
+            oFX.untouchable = true;
+            addLog(`${sN}: ${oN} is untouchable (Yoshi Egg)`);
+          }
+          break;
+        case 'pac_man':     sFX.pacManCharges=sFX.buffed==='pac_man'?Infinity:5; addLog(`${sN}: Pac Man — absorbs 5 attacks`); pushDefZone(isP,card); break;
+        case 'bedrock':     sFX.bedrockActive=true; addLog(`${sN}: Bedrock active`); pushDefZone(isP,card); break;
+        case 'freddy_mask': sFX.freddyCharges=sFX.buffed==='freddy'?Infinity:2; addLog(`${sN}: Freddy Mask — 2 blocks`); pushDefZone(isP,card); break;
+        case 'black_circle':{const c=opts?.choice||'shield';sFX.buffed=c;addLog(`${sN}: Black Circle — ${c} → ∞`);break;}
+        case 'leviathan':
+          if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
+          dealDmg(isP,2); oFX.stun=2; oFX.untouchable=true;
+          addLog(`${sN}: Leviathan — 2 DMG + stun 2 + untouchable`); break;
+        case 'kirby': case 'boulder':
+          if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
+          dealDmg(isP,2); addLog(`${sN}: ${card.name} — 2 DMG`); break;
+        case 'crushed':
+          if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
+          dealDmg(isP,1); oFX.missedTurns+=2; addLog(`${sN}: Crushed — 1 DMG + ${oN} misses 2`); break;
+        case 'power_mush':{
+          const c=opts?.choice||'fire';
+          if(oFX.untouchable&&c==='fire'){addLog(`${oN} untouchable!`);break;}
+          if(c==='fire'){dealDmg(isP,2);addLog(`${sN}: Power Mush Fire — 2 DMG`);}
+          else{oFX.stun=Math.max(oFX.stun,1);addLog(`${sN}: Power Mush Ice — ${oN} stunned`);}
+          break;}
+        case 'ultra_meat':
+          if(isP)G.playerHP=Math.min(3,G.playerHP+2);else G.aiHP=Math.min(3,G.aiHP+2);
+          addLog(`${sN}: Ultra Meat — +2 HP`);
+          showHealEffect(isP);
+          break;
+        case 'knife':
+          if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
+          dealDmg(isP,1); addLog(`${sN}: Knife — 1 DMG`); break;
+        case 'jump':
+          if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
+          dealDmg(isP,1); oFX.stun=Math.max(oFX.stun,1);
+          addLog(`${sN}: Jump — 1 DMG + ${oN} stunned 1`);
+          break;
+        case 'snap_knee':{
+          const c=opts?.choice||'dmg';
+          if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
+          if(c==='dmg'){
+            dealDmg(isP,1);
+            addLog(`${sN}: Snap Knee — 1 DMG`);
+            if(!isP) showActionNotif('AI SNAPPED YOUR KNEE\n— 1 DAMAGE');
+          } else {
+            oFX.stun=Math.max(oFX.stun,1);
+            addLog(`${sN}: Snap Knee — ${oN} stunned`);
+            if(!isP) showActionNotif('AI SNAPPED YOUR KNEE\n— YOUR TURN IS SKIPPED');
+          }
+          break;}
+        case 'arthur':
+          if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
+          wipeShields(oFX, isP?false:true);
+          {const dmg=Math.min(3,isP?G.aiHP:G.playerHP);
+          if(isP)G.aiHP=Math.max(0,G.aiHP-dmg);else G.playerHP=Math.max(0,G.playerHP-dmg);
+          addLog(`${sN}: Arthur Shot — shields wiped, ${dmg} DMG`);}
+          break;
+        case 'doug':{
+          const c=opts?.choice||'hot';
+          if(c==='hot_opp'){
+            oFX.hot+=2;addLog(`${sN}: Doug — HoT x2 on ${oN}`);
+            showHealEffect(false); // AI healing, no effect
+          } else if(c==='hot'){
+            sFX.hot+=2;addLog(`${sN}: Doug — HoT x2`);
+            showHealEffect(isP); // Player healing, show effect
+          const c=opts?.choice||'dmg';
+          if(c==='dmg1'){
+            if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}dealDmg(isP,1);addLog(`${sN}: Doug — 1 DMG`);
+          } else{
+            if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}dealDmg(isP,2);addLog(`${sN}: Doug — 2 DMG`);
+          }
+          break;}
+        case 'sonic_shoes':
+          const sonicTarget = opts?.choice || 'self';
+          if (sonicTarget === 'self') {
+            sFX.dodgeCharges+=sFX.buffed==='dodge'?Infinity:3; 
+            addLog(`${sN}: Sonic Shoes — dodge 3 attacks`);
+          } else {
+            oFX.dodgeCharges+=oFX.buffed==='dodge'?Infinity:3; 
+            addLog(`${sN}: Sonic Shoes — ${oN} dodge 3 attacks`);
+          }
+          pushDefZone(isP,card);
+          break;
+        case 'five_cards': {
+          const drawn = [];
+          const slots = MAX_HAND - (isP ? G.playerHand.length : G.aiHand.length);
+          const toDraw = Math.max(0, Math.min(5, slots));
+          for(let i=0;i<toDraw;i++){
+            const c = drawFromDeck();
+            if(isP){ G.playerHand.push(c); drawn.push(c); } else { G.aiHand.push(c); }
+          }
+          if(isP) G.pendingDealAnim = drawn;
+          addLog(`${sN}: 5 Cards — drew ${toDraw}`); break;
+        }
+        case 'hoverboard':
+          sFX.dodgeCharges+=sFX.buffed==='dodge'?Infinity:1; addLog(`${sN}: Hover Board — dodge 1`); pushDefZone(isP,card); break;
+        case 'forcefield': case 'shield':
+          sFX.shieldCharges+=sFX.buffed==='shield'?Infinity:1; addLog(`${sN}: ${card.name} — shield +1`); pushDefZone(isP,card); break;
+        case 'meat': case 'soul':{
+          const c=opts?.choice||'self';
+          if(c==='opp'){if(isP)G.aiHP=Math.min(3,G.aiHP+1);else G.playerHP=Math.min(3,G.playerHP+1);addLog(`${sN}: ${card.name} — healed ${oN} +1`);}
+          else{if(isP)G.playerHP=Math.min(3,G.playerHP+1);else G.aiHP=Math.min(3,G.aiHP+1);addLog(`${sN}: ${card.name} — healed self +1`);}
+          showHealEffect(isP);
+          break;}
+        case 'sonic_shoes':
+          sFX.dodgeCharges+=sFX.buffed==='dodge'?Infinity:3; addLog(`${sN}: Sonic Shoes — dodge 3`); pushDefZone(isP,card); break;
+        case 'samzus':
+          if(oFX.untouchable){addLog(`${oN} untouchable!`);break;}
+          wipeShields(oFX, isP?false:true); addLog(`${sN}: Samzus Laser — wiped all ${oN} shields`); break;
+      }
+    }
+
+    // ── Combat helpers ─────────────────────────────────────────────────────────
+    function consumeDefCard(attackerIsPlayer, ids) {
+      const dz = attackerIsPlayer ? G.aiDefenseZone : G.playerDefenseZone;
+      const idx = dz.findIndex(c => ids.includes(c.id));
+      if(idx !== -1) { const removed = dz.splice(idx, 1)[0]; updateDiscard(removed); }
+    }
+
+    function dealDmg(attackerIsPlayer, amount) {
+      const oFX=attackerIsPlayer?G.aiFX:G.playerFX;
+      if (oFX.illumina) {
+        oFX.illumina=false;
+        if(attackerIsPlayer)G.playerHP=Math.max(0,G.playerHP-amount);
+        else G.aiHP=Math.max(0,G.aiHP-amount);
+        addLog(`Illumina reflects ${amount} DMG!`); return;
+      }
+      if (oFX.dodgeCharges>0) {
+        if(oFX.buffed!=='dodge'){oFX.dodgeCharges--;if(oFX.dodgeCharges===0)consumeDefCard(attackerIsPlayer,['sonic_shoes','hoverboard']);}
+        // For 1 DMG attacks, dodge completely. For >1 DMG attacks, reduce by 1
+        if(amount <= 1) {
+          addLog(`Attack dodged!`);
+        } else {
+          const reducedAmount = amount - 1;
+          if(attackerIsPlayer)G.aiHP=Math.max(0,G.aiHP-reducedAmount);
+          else G.playerHP=Math.max(0,G.playerHP-reducedAmount);
+          addLog(`1 DMG dodged! ${reducedAmount} DMG taken!`);
+        }
+        return;
+      }
+      if (oFX.bedrockActive) {
+        if(oFX.buffed!=='bedrock')oFX.bedrockActive=false;
+        consumeDefCard(attackerIsPlayer,['bedrock']);
+        addLog(`Bedrock blocked!`); return;
+      }
+      if (oFX.pacManCharges>0) {
+        if(oFX.buffed!=='pac_man'){oFX.pacManCharges--;if(oFX.pacManCharges===0)consumeDefCard(attackerIsPlayer,['pac_man']);}
+        addLog(`Pac Man absorbed!`); return;
+      }
+      if (oFX.freddyCharges>0) {
+        if(oFX.buffed!=='freddy'){oFX.freddyCharges--;if(oFX.freddyCharges===0)consumeDefCard(attackerIsPlayer,['freddy_mask']);}
+        addLog(`Freddy Mask blocked!`); return;
+      }
+      if (oFX.shieldCharges>0) {
+        if(oFX.buffed!=='shield')oFX.shieldCharges--;
+        consumeDefCard(attackerIsPlayer,['forcefield','shield','hoverboard']);
+        addLog(`Shield absorbed!`); return;
+      }
+      if(attackerIsPlayer)G.aiHP=Math.max(0,G.aiHP-amount);
+      else G.playerHP=Math.max(0,G.playerHP-amount);
+    }
+
+    function resolveInstakill(oFX, sFX, attackerIsPlayer) {
+      if (oFX.illumina) {
+        oFX.illumina=false;
+        if(attackerIsPlayer)G.playerHP=0;else G.aiHP=0;
+        addLog(`Illumina reflects the insta-kill!`); return true;
+      }
+      const oppHand=attackerIsPlayer?G.aiHand:G.playerHand;
+      const idx=oppHand.findIndex(c=>c.type==='instakill');
+      if (idx!==-1) { oppHand.splice(idx,1); addLog(`Insta-kill blocked by opponent's insta-kill!`); return true; }
+      return false;
+    }
+
+    function pushDefZone(isPlayer, card) {
+      if(isPlayer&&G.playerDefenseZone.length<6)G.playerDefenseZone.push(card);
+      else if(!isPlayer&&G.aiDefenseZone.length<6)G.aiDefenseZone.push(card);
+    }
+
+    function showActionNotif(msg) {
+      const el = document.getElementById('action-notif');
+      const txt = document.getElementById('action-notif-text');
+      txt.textContent = msg;
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 1500);
+    }
+
+    function showHealEffect(isPlayerHeal = true) {
+      // Only show heal effect for player healing, not AI healing
+      if (!isPlayerHeal) return;
+      
+      const el = document.getElementById('heal-flash');
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 800);
+    }
+
+    function showCardInfo(card) {
+      const panel = document.getElementById('card-info-panel');
+      const title = document.getElementById('card-info-title');
+      const desc = document.getElementById('card-info-desc');
+      const type = document.getElementById('card-info-type');
+
+      title.textContent = card.name || '';
+      desc.textContent = card.desc || '';
+
+      // Set type indicator
+      type.className = 'card-info-type';
+      switch(card.type) {
+        case 'damage': type.classList.add('damage'); type.textContent = 'DAMAGE'; break;
+        case 'heal': type.classList.add('heal'); type.textContent = 'HEAL'; break;
+        case 'defense': type.classList.add('defense'); type.textContent = 'DEFENSE'; break;
+        case 'special': type.classList.add('special'); type.textContent = 'SPECIAL'; break;
+        case 'instakill': type.classList.add('instakill'); type.textContent = 'INSTAKILL'; break;
+        case 'utility': type.classList.add('utility'); type.textContent = 'UTILITY'; break;
+        default: type.textContent = ''; break;
+      }
+
+      // Position panel near the card
+      const cardEl = event.target;
+      const cardRect = cardEl.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+
+      panel.style.left = (cardRect.left + cardRect.width/2 - panelRect.width/2) + 'px';
+      panel.style.top = (cardRect.top - panelRect.height - 10) + 'px';
+
+      panel.classList.add('active');
+    }
+
+    function hideCardInfo() {
+      const panel = document.getElementById('card-info-panel');
+      panel.classList.remove('active');
+    }
+
+    function wipeShields(fx, wipeIsPlayer) {
+      fx.shieldCharges=0;fx.freddyCharges=0;fx.bedrockActive=false;
+      fx.pacManCharges=0;fx.dodgeCharges=0;fx.buffed=null;
+      if(wipeIsPlayer===true)G.playerDefenseZone=[];
+      else if(wipeIsPlayer===false)G.aiDefenseZone=[];
+    }
+
+    // ── Turn management ────────────────────────────────────────────────────────
+    function endPlayerTurn() {
+      console.log('Ending player turn, phase:', G.phase);
+      if(G.playerFX.hot>0){G.playerFX.hot--;G.playerHP=Math.min(3,G.playerHP+1);addLog(`You: HoT +1 HP`);showHealEffect(true);}
+      if(G.aiFX.stun>0){G.aiFX.stun--;addLog(`AI stunned — skips turn`);endAiTurn();return;}
+      if(G.aiFX.missedTurns>0){G.aiFX.missedTurns--;addLog(`AI misses a turn`);endAiTurn();return;}
+
+      // Safety: Ensure clean state for next player turn
+      G.animating = false;
+      G.pendingPlay = null;
+
+      renderAll();      
+      G.phase='ai-turn'; setTurn('ai'); setStatus('bot is cookin...');
+      setTimeout(doAiTurn,aiThinkSeconds * 1000);
+    }
+
+    function endAiTurn() {
+      console.log('Ending AI turn, phase:', G.phase);
+      if(G.aiFX.hot>0){G.aiFX.hot--;G.aiHP=Math.min(3,G.aiHP+1);addLog(`AI: HoT +1 HP`);showHealEffect(false);}
+      if(G.playerFX.stun>0){
+        G.playerFX.stun--;
+        addLog(`You are stunned — turn skipped`);
+        // Safety: Ensure clean state for next AI turn
+        G.animating = false;
+        G.pendingPlay = null;
+        renderAll(); G.phase='ai-turn'; setTurn('ai'); setStatus('bot is cookin...');
+        setTimeout(doAiTurn,aiThinkSeconds * 1000);
+        return;
+      }
+      if(G.playerFX.missedTurns>0){
+        G.playerFX.missedTurns--;
+        addLog(`You miss a turn`);
+        // Safety: Ensure clean state for next AI turn
+        G.animating = false;
+        G.pendingPlay = null;
+        renderAll(); G.phase='ai-turn'; setTurn('ai'); setStatus('bot is cookin...');
+        setTimeout(doAiTurn,aiThinkSeconds * 1000);
+        return;
+      }
+
+      // Safety: Ensure clean state for next player turn
+      G.animating = false;
+      G.pendingPlay = null;
+
+      renderAll(); G.phase='player-select'; setTurn('player'); setStatus('pick a card :D');
+    }
+
+    // ── AI Turn ────────────────────────────────────────────────────────────────
+    const HEAL_IDS = new Set(['meat','soul','ultra_meat']);
+    function aiHandIsOnlyHeals() {
+      return G.aiHand.length > 0 && G.aiHand.every(c => c.type==='heal' || HEAL_IDS.has(c.id));
+    }
+
+    function doAiTurn() {
+      console.log('AI turn started, phase:', G.phase, 'AI hand length:', G.aiHand.length);
+      if(G.phase==='gameover')return;
+      if(G.aiFX.stun>0){G.aiFX.stun--;addLog(`AI stunned — skips turn`);renderEffects();endAiTurn();return;}
+      if(G.aiFX.missedTurns>0){G.aiFX.missedTurns--;addLog(`AI misses a turn`);renderEffects();endAiTurn();return;}
+      const shouldDraw = !G.aiHand.length || aiHandIsOnlyHeals();
+      console.log('Should AI draw?', shouldDraw, 'Deck length:', G.deck.length);
+      if(shouldDraw && G.deck.length>0 && G.aiHand.length<MAX_HAND){
+        G.aiHand.push(drawFromDeck()); addLog(`AI draws a card`); renderAiHand(); endAiTurn(); return;
+      }
+      if(!G.aiHand.length){console.log('AI has no cards, ending turn'); endAiTurn();return;}
+      const idx=aiPickCard();
+      console.log('AI picked card index:', idx, 'Card:', G.aiHand[idx]?.name);
+      const card=G.aiHand[idx];
+      addLog(`AI plays: ${card.name}`);
+      executePlay('ai',idx,aiOpts(card));
+      // endAiTurn is called inside executePlay's timeout
+    }
+
+    function aiPickCard() {
+      const h=G.aiHand;
+      console.log('AI picking from hand:', h.map(c => c.name));
+      if(G.playerHP<=1&&!G.playerFX.illumina){const i=h.findIndex(c=>c.type==='instakill');if(i!==-1){console.log('AI found instakill opportunity');return i;}}
+      if(G.playerHP<=2&&!G.playerFX.untouchable){const i=h.findIndex(c=>['kirby','boulder','arthur','doug','jump','knife','crushed','power_mush'].includes(c.id));if(i!==-1){console.log('AI found damage opportunity');return i;}}
+      if(G.aiHP<=2){const i=h.findIndex(c=>c.type==='heal'||c.id==='ultra_meat');if(i!==-1){console.log('AI found heal opportunity');return i;}const j=h.findIndex(c=>c.type==='defense');if(j!==-1){console.log('AI found defense opportunity');return j;}}
+      const ik=h.findIndex(c=>c.type==='instakill'&&!G.playerFX.illumina&&!G.playerFX.untouchable);
+      if(ik!==-1){console.log('AI found instakill');return ik;}
+      const randomIndex = Math.floor(Math.random()*h.length);
+      console.log('AI picking random card:', randomIndex);
+      return randomIndex;
+    }
+
+    function aiOpts(card) {
+      if(card.id==='snap_knee')  return{choice:G.playerHP<=2?'dmg':'stun'};
+      if(card.id==='power_mush') return{choice:G.playerHP<=2?'fire':'ice'};
+      if(card.id==='doug')       return{choice:G.aiHP<=3?'hot':'dmg'};
+      if(card.id==='doug')       return{choice:G.playerHP<=1?'dmg1':'dmg'};
+      if(card.id==='black_circle')return{choice:G.aiFX.shieldCharges>0?'shield':'dodge'};
+      if(card.id==='meat'||card.id==='soul') return{choice:'self'};
+      return null;
+    }
+
+    // ── Game over ──────────────────────────────────────────────────────────────
+    function checkGameOver() {
+      if(G.playerHP>0&&G.aiHP>0)return;
+      G.phase='gameover';
+      const win=G.playerHP>0;
+      const t=document.getElementById('gameover-title');
+      t.textContent=win?'you ate fr':'you got cooked';
+      t.className='gameover-title '+(win?'win':'lose');
+      document.getElementById('gameover-sub').textContent=win?'bot said gg no re':'it be like that sometimes ngl';
+
+      // Fix: Properly show gameover overlay with transition
+      const overlay = document.getElementById('gameover-overlay');
+      overlay.classList.remove('hidden');
+      setTimeout(() => overlay.classList.add('active'), 10);
+    }
+
+    // ── Screen transitions ─────────────────────────────────────────────────────
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('hidden',s.id!==id));
+    }
+
+    // ── Gate ──────────────────────────────────────────────────────────────────
+    function checkGate() {
+      const input=document.getElementById('gate-input');
+      const savedKey = localStorage.getItem('Key');
+
+      // If there's a saved key, use it to bypass gate
+      if(savedKey === 'heavenlyjumpstyle'){
+        showScreen('menu-screen');
+        return;
+      }
+
+      // Check if entered key is correct
+      if(input.value==='heavenlyjumpstyle'){
+        // Save the correct key to local storage
+        localStorage.setItem('Key', 'heavenlyjumpstyle');
+        showScreen('menu-screen');
+      }
+      else{input.classList.remove('error');void input.offsetWidth;input.classList.add('error');input.value='';setTimeout(()=>input.classList.remove('error'),400);}
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    spawnBgCards();
+
+    // Check for saved gate key on page load
+    const savedKey = localStorage.getItem('Key');
+    if(savedKey === 'heavenlyjumpstyle'){
+      showScreen('menu-screen');
+    } else {
+      showScreen('gate-screen');
+    }
+
+    document.getElementById('gate-submit').addEventListener('click',checkGate);
+    document.getElementById('gate-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkGate();});
+    document.getElementById('play-btn').addEventListener('click',()=>{startGame();showScreen('game-screen');});
+    document.getElementById('menu-btn').addEventListener('click',()=>{
+      if (menuConfirmationEnabled) {
+        const overlay = document.getElementById('menu-confirm-overlay');
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.add('active'), 10);
+      } else {
+        showScreen('menu-screen');
+      }
+    });
+    document.getElementById('confirm-menu-btn').addEventListener('click',()=>{
+      const overlay = document.getElementById('menu-confirm-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        showScreen('menu-screen');
+      }, 200);
+    });
+    document.getElementById('cancel-menu-btn').addEventListener('click',()=>{
+      const overlay = document.getElementById('menu-confirm-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => overlay.classList.add('hidden'), 200);
+    });
+    document.getElementById('deck-pile').addEventListener('click',()=>{
+      if(G.phase!=='player-select'||G.animating||G.pendingPlay)return;
+      if(G.deck.length>0&&G.playerHand.length<MAX_HAND){G.playerHand.push(drawFromDeck());renderPlayerHand();addLog(`You drew a card`);endPlayerTurn();}else if(G.playerHand.length>=MAX_HAND){setStatus('hand full :D (12 max)');}
+    });
+    document.getElementById('discard-pile').addEventListener('click',()=>{
+      if(!G.pendingPlay||G.phase!=='player-select'||G.animating)return;
+      const {card}=G.pendingPlay;
+      if(card.type==='defense'){
+        setStatus('ayo defense cards go in the defense zone :D');
+        return;
+      }
+      playPending(null);
+    });
+    document.getElementById('defense-zone').addEventListener('click',()=>{
+      if(!G.pendingPlay||G.phase!=='player-select'||G.animating)return;
+      const {card,handIndex}=G.pendingPlay;
+      if(card.type!=='defense'){
+        const screen=document.getElementById('game-screen'),flash=document.getElementById('red-flash'),da=document.getElementById('dumb-ah');
+        screen.classList.add('shaking');flash.classList.add('active');da.classList.add('active');
+        setTimeout(()=>{screen.classList.remove('shaking');flash.classList.remove('active');da.classList.remove('active');},500);
+        deselect(); return;
+      }
+      executePlay('player',handIndex,null);
+    });
+    document.getElementById('play-again-btn').addEventListener('click',()=>{
+      const overlay = document.getElementById('gameover-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        startGame();
+      }, 200);
+    });
+    document.getElementById('menu-again-btn').addEventListener('click',()=>{
+      const overlay = document.getElementById('gameover-overlay');
+      overlay.classList.remove('active');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        showScreen('menu-screen');
+      }, 200);
+    });
+
+    // Settings modal
+    (function(){
+      const btn = document.getElementById('settings-btn');
+      const backdrop = document.getElementById('settings-backdrop');
+      const closeBtn = document.getElementById('settings-close');
+      function openModal() {
+        backdrop.classList.remove('hidden','leaving');
+        backdrop.classList.add('entering');
+      }
+      function closeModal() {
+        backdrop.classList.remove('entering');
+        backdrop.classList.add('leaving');
+        backdrop.addEventListener('animationend', () => {
+          backdrop.classList.add('hidden');
+          backdrop.classList.remove('leaving');
+        }, { once: true });
+      }
+      btn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      backdrop.addEventListener('click', (e) => { if(e.target===backdrop) closeModal(); });
+    })();
+    const sliderEl = document.getElementById('ai-speed-slider');
+    const menuConfirmToggle = document.getElementById('menu-confirm-toggle');
+    const startingCardsSlider = document.getElementById('starting-cards-slider');
+
+    function updateSliderFill() {
+      const pct = ((sliderEl.value - sliderEl.min) / (sliderEl.max - sliderEl.min)) * 100;
+      sliderEl.style.background = `linear-gradient(to right, #fff 0%, #fff ${pct}%, rgba(255,255,255,0.15) ${pct}%, rgba(255,255,255,0.15) 100%)`;
+    }
+    function updateStartingCardsFill() {
+      const pct = ((startingCardsSlider.value - startingCardsSlider.min) / (startingCardsSlider.max - startingCardsSlider.min)) * 100;
+      startingCardsSlider.style.background = `linear-gradient(to right, #fff 0%, #fff ${pct}%, rgba(255,255,255,0.15) ${pct}%, rgba(255,255,255,0.15) 100%)`;
+    }
+    sliderEl.addEventListener('input', (e) => {
+      aiThinkSeconds = parseFloat(e.target.value);
+      document.getElementById('ai-speed-val').textContent = aiThinkSeconds + 's';
+      updateSliderFill();
+    });
+    menuConfirmToggle.addEventListener('click', () => {
+      menuConfirmationEnabled = !menuConfirmationEnabled;
+      if (menuConfirmationEnabled) {
+        menuConfirmToggle.textContent = 'ON';
+        menuConfirmToggle.classList.remove('off');
+        document.getElementById('menu-confirm-val').textContent = 'ON';
+      } else {
+        menuConfirmToggle.textContent = 'OFF';
+        menuConfirmToggle.classList.add('off');
+        document.getElementById('menu-confirm-val').textContent = 'OFF';
+      }
+    });
+    startingCardsSlider.addEventListener('input', (e) => {
+      startingCardsCount = parseInt(e.target.value, 10);
+      document.getElementById('starting-cards-val').textContent = startingCardsCount;
+      updateStartingCardsFill();
+    });
+    updateSliderFill();
+    updateStartingCardsFill();
+
+  </script>
+  <div class="version-text">1.8.2-beta</div>
+  <div class="version-text">1.8.3</div>
 </body>
 </html>
